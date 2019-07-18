@@ -121,13 +121,13 @@ class Leg(object):
         while True:
             self.sample()
 
-    def save_sample_data(self):
+    def save_sample_data(self,name):
         print('there')
         label=np.array(self.label)
         data=np.array(self.data)
 
-        np.save('./data/label_back.npy',label)
-        np.save('./data/data_back.npy',data)
+        np.save('./data/label_{}.npy'.format(name),label)
+        np.save('./data/data_{}.npy'.format(name),data)
 
 
 
@@ -157,4 +157,4 @@ if __name__ == "__main__":
     try:
         rb.sample_loop()
     except KeyboardInterrupt as e:
-        rb.save_sample_data()
+        rb.save_sample_data('back')

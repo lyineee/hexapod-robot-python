@@ -5,6 +5,7 @@ import sys
 import numpy as np 
 
 from regression import generate_use_data
+from matplotlib import pyplot as plt 
 # from tensorflow import keras
 
 
@@ -39,6 +40,8 @@ class Hexapod(object):
         self.right_1 = 4
         self.right_2 = 5
 
+        self.last_time=0
+
     def radian(self, degre):
         rad = degre*(math.pi/180)
         return rad
@@ -72,70 +75,91 @@ class Hexapod(object):
         self.back_data=np.load('./data/NN_back_use.npy')
         self.middle_data=np.load('./data/NN_middle_use.npy')
         self.ahead_data=np.load('./data/NN_ahead_use.npy')
+
+        # plt.plot(self.back_data[:,0],self.back_data[:,1:])
+        # plt.show()
         # self.ahead_data=self.ahead_data[::-1]
         # self.back_data=self.back_data[::-1]
 
         #init robot
         self.init()
 
-    def step(self):
-        #back
-        self.set_leg_position(1,np.concatenate([[40],self.middle_data[total_step][1:]]))
-        self.set_leg_position(3,np.concatenate([[40],self.back_data[total_step][1:]]))
-        self.set_leg_position(5,np.concatenate([[40],self.ahead_data[total_step][1:]]))
-        for i in range(total_step):
-            #ahead
-            self.set_leg_position(0,self.back_data[i])
-            self.set_leg_position(2,self.ahead_data[i])
-            self.set_leg_position(4,self.middle_data[i])
-            if i==0:
-                time.sleep(0.5)
-            time.sleep(0.01)
+    def set_step_data(self,data):
+        self.back_data=data[0]
+        self.middle_data=data[1]
+        self.ahead_data=data[2]
 
-        #back
-        self.set_leg_position(4,np.concatenate([self.middle_data[0][0],[60],self.middle_data[0][2]]))
-        self.set_leg_position(0,np.concatenate([self.back_data[0][0],[60],self.back_data[0][1:]]))
-        self.set_leg_position(2,np.concatenate([self.ahead_data[0][0],[60],self.ahead_data[0][1:]]))
-        for i in range(total_step):
-            #ahead
-            self.set_leg_position(1,self.middle_data[i])
-            self.set_leg_position(3,self.back_data[i])
-            self.set_leg_position(5,self.ahead_data[i])
-            if i==0:
-                time.sleep(0.5)
-            time.sleep(0.01)
 
-    def test(self):
-        hang_up=80
-
-        total_step=self.ahead_data.shape[0]-1
-        while True:
+    def step(self,time_0,time_limit):
+        self.get_body_x_position()
+        while self.get_time()<time_limit:
+            total_step=self.ahead_data.shape[0]-1
+            #back
+            self.set_leg_position(1,np.concatenate([[self.middle_data[0][0]],[70],[self.middle_data[0][2]]]))
+            self.set_leg_position(3,np.concatenate([[self.ahead_data[0][0]],[60],[self.ahead_data[0][2]]]))
+            self.set_leg_position(5,np.concatenate([[self.back_data[0][0]],[70],[self.back_data[0][2]]]))
             for i in range(total_step):
                 #ahead
                 self.set_leg_position(0,self.ahead_data[i])
                 self.set_leg_position(2,self.back_data[i])
                 self.set_leg_position(4,self.middle_data[i])
-                #back
-                self.set_leg_position(1,np.concatenate([[self.middle_data[0][0]],[70],[self.middle_data[0][2]]]))
-                self.set_leg_position(3,np.concatenate([[self.ahead_data[0][0]],[70],[self.ahead_data[0][2]]]))
-                self.set_leg_position(5,np.concatenate([[self.back_data[0][0]],[70],[self.back_data[0][2]]]))
-                if i==0:
-                    time.sleep(0.05)
-                time.sleep(0.003)
+                if i>round(total_step*4/5):
+                    self.set_leg_position(1,self.middle_data[0]+[0,1,0])
+                    self.set_leg_position(3,self.ahead_data[0]+[0,1,0])
+                    self.set_leg_position(5,self.back_data[0]+[0,1,0])
+                time.sleep(time_0)
+            #back
+            self.set_leg_position(0,np.concatenate([[self.ahead_data[0][0]],[50],[self.ahead_data[0][2]]]))
+            self.set_leg_position(2,np.concatenate([[self.back_data[0][0]],[50],[self.back_data[0][2]]]))
+            self.set_leg_position(4,np.concatenate([[self.middle_data[0][0]],[50],[self.middle_data[0][2]]]))
             for i in range(total_step):
                 #ahead
                 self.set_leg_position(1,self.middle_data[i])
                 self.set_leg_position(3,self.ahead_data[i])
                 self.set_leg_position(5,self.back_data[i])
-                #back
-                self.set_leg_position(0,np.concatenate([[self.ahead_data[0][0]],[70],[self.ahead_data[0][2]]]))
-                self.set_leg_position(2,np.concatenate([[self.back_data[0][0]],[70],[self.back_data[0][2]]]))
-                self.set_leg_position(4,np.concatenate([[self.middle_data[0][0]],[70],[self.middle_data[0][2]]]))
-                if i==0:
-                    time.sleep(0.05)
+                if i>round(total_step*4/5):
+                    self.set_leg_position(0,self.ahead_data[0]+[0,1,0])
+                    self.set_leg_position(2,self.back_data[0]+[0,1,0])
+                    self.set_leg_position(4,self.middle_data[0]+[0,1,0])
+                time.sleep(time_0)
+
+    def test(self):
+        total_step=self.ahead_data.shape[0]-1
+        while True:
+            #back
+            self.set_leg_position(1,np.concatenate([[self.middle_data[0][0]],[50],[self.middle_data[0][2]]]))
+            self.set_leg_position(3,np.concatenate([[self.ahead_data[0][0]],[50],[self.ahead_data[0][2]]]))
+            self.set_leg_position(5,np.concatenate([[self.back_data[0][0]],[50],[self.back_data[0][2]]]))
+            for i in range(total_step):
+                #ahead
+                self.set_leg_position(0,self.ahead_data[i])
+                self.set_leg_position(2,self.back_data[i])
+                self.set_leg_position(4,self.middle_data[i])
+                if i>round(total_step*4/5):
+                    self.set_leg_position(1,self.middle_data[0]+[0,1,0])
+                    self.set_leg_position(3,self.ahead_data[0]+[0,1,0])
+                    self.set_leg_position(5,self.back_data[0]+[0,1,0])
+                # if i==0:
+                #     time.sleep(0.01)
+                time.sleep(0.003)
+            #back
+            self.set_leg_position(0,np.concatenate([[self.ahead_data[0][0]],[70],[self.ahead_data[0][2]]]))
+            self.set_leg_position(2,np.concatenate([[self.back_data[0][0]],[70],[self.back_data[0][2]]]))
+            self.set_leg_position(4,np.concatenate([[self.middle_data[0][0]],[60],[self.middle_data[0][2]]]))
+            for i in range(total_step):
+                #ahead
+                self.set_leg_position(1,self.middle_data[i])
+                self.set_leg_position(3,self.ahead_data[i])
+                self.set_leg_position(5,self.back_data[i])
+                if i>round(total_step*4/5):
+                    self.set_leg_position(0,self.ahead_data[0]+[0,1,0])
+                    self.set_leg_position(2,self.back_data[0]+[0,1,0])
+                    self.set_leg_position(4,self.middle_data[0]+[0,1,0])
+                # if i==0:
+                #     time.sleep(0.01)
                 time.sleep(0.003)
 
-    def wait_for_stop(self,vrep_handle):
+    def wait_for_stop(self,vrep_handle)->tuple:
         speed_list=[]
         object_speed=10
         start_time=vrep.simxGetLastCmdTime(self.client_id)
@@ -153,6 +177,28 @@ class Hexapod(object):
         speed_mean=float(np.mean(speed_list))
         used_time=end_time-start_time
         return speed_mean,used_time
+    def get_time(self)->float:
+        time=vrep.simxGetLastCmdTime(self.client_id)
+        return time
+
+    def get_body_x_position(self)->float:
+        _,pos=vrep.simxGetObjectPosition(self.client_id,self.body,-1,vrep.simx_opmode_blocking)
+        pos_x=pos[1]
+        return pos_x
+
+    def start_simulation(self):
+        # status=-1
+        # while status!=1:
+        status=vrep.simxStartSimulation(self.client_id,vrep.simx_opmode_oneshot)
+        time.sleep(0.5)
+
+    def stop_simulation(self):
+        # status=-1
+        # while status!=1:
+        status=vrep.simxStopSimulation(self.client_id,vrep.simx_opmode_oneshot)
+        time.sleep(0.5)
+
+
 
 
 def connect(retry):
@@ -170,14 +216,33 @@ def connect(retry):
             sys.exit(1)
         time.sleep(1)
 
+
 if __name__ == "__main__":
-    # generate_use_data([[-10,45],[-30,50],[-50,40]],50)
+    # generate_use_data([[10,45],[-25,40],[-50,-10]],50)
     client_id=connect(10)
-    vrep.simxStartSimulation(client_id,vrep.simx_opmode_blocking)
     rb=Hexapod(client_id)
-    rb.step_init()
+    # rb.step_init()
     time.sleep(1)
+    # rb.test()
+    # while True:
+    vrep.simxStartSimulation(client_id,vrep.simx_opmode_blocking)
+        # time.sleep(1)
+        # start_time=rb.get_time()
+        # while rb.get_time()-start_time<3000:
+        #     # start=rb.get_time()
+        #     # print(start_time)
+        #     print(rb.get_time())
+        #     time.sleep(1)
+        #     rb.set_joint_position(0,0,0)
+        #     print(rb.get_time()-start_time)
+        #     time.sleep(1)
+        # print(rb.get_time()-start_time)     
+        # print('end!!!!!!!!!!')   
+        # vrep.simxStopSimulation(client_id,vrep.simx_opmode_blocking)
+        # time.sleep(1)
+    rb.step_init()
     rb.test()
+
 
     
 
