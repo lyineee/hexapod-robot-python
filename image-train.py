@@ -26,16 +26,19 @@ def connect(retry):
             sys.exit(1)
         time.sleep(1)
 
-def cap_loop(ver,rb):
+def cap_loop(ver,rb,sleep_time):
     global lock
     cap=ImgCap(ver)
     while True:
         lock.acquire()
         try:
             cap.capture(rb.get_image(),label)
+        except Exception as e:
+            time.sleep(sleep_time)
+            continue
         finally:
             lock.release()
-        time.sleep(0.2)
+        time.sleep(sleep_time)
 
 def sample_data():
     client_id = connect(10)
@@ -49,7 +52,7 @@ def sample_data():
     global label,lock
     label=0
     lock=threading.Lock()
-    cap_th=threading.Thread(target=cap_loop,args=(0,rb))
+    cap_th=threading.Thread(target=cap_loop,args=(5,rb,0.05))
     cap_th.start()
 
     while True:
@@ -59,10 +62,10 @@ def sample_data():
                 client_id, rb.body, -1, vrep.simx_opmode_blocking)
         finally:
             lock.release()
+
         if position[0] < 4.6 and position_state == 0:
 
-            rb.one_step(0.01)
-            # cap.capture(rb.get_image(),0)
+            rb.one_step(0.005)
             label=0
 
         elif position[0] >= 4.6 and position[1] < 1.3:
@@ -70,40 +73,34 @@ def sample_data():
                 position_state = 1
             
             rb.go_left()
-            # cap.capture(rb.get_image(),1)
             label=1
 
         elif position[0] > 5.6 and 2.7 > position[1] >= 1.3:  
             if position_state == 1:
                 position_state = 2
             rb.go_left()
-            # cap.capture(rb.get_image(),1)
             label=1
 
         elif 2.8 <= position[0] < 5.5 and 4.2 > position[1] >= 2.4:
             if position_state == 2:
                 position_state = 3
-            rb.one_step(0.01)
-            # cap.capture(rb.get_image(),0)
+            rb.one_step(0.005)
             label=0
 
         elif position[0] < 2.8 and 4.2 > position[1] >= 2.7:
             if position_state == 3:
                 position_state = 4
             rb.go_right()
-            # cap.capture(rb.get_image(),2)
             label=2
 
-        elif position[0] < 2.8 and 6.8 > position[1] >= 4.2:
+        elif position[0] < 2.8 and 6.7 > position[1] >= 4.2:
             if position_state == 4:
                 position_state = 5
             rb.go_right()
-            # cap.capture(rb.get_image(),2)
             label=2
 
         else:
-            rb.one_step(0.01)
-            # cap.capture(rb.get_image(),0)
+            rb.one_step(0.005)
             label=0
 
 

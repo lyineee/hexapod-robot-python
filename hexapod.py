@@ -240,7 +240,7 @@ class Hexapod(object):
         self.turn_left([20, 30])
 
     def go_right(self):
-        self.turn_right([20,34])
+        self.turn_right([20,36])
 
     def test(self):
         total_step = self.ahead_data.shape[0]-1
@@ -333,6 +333,8 @@ class Hexapod(object):
             self.client_id, self.vision_sensor, 0, vrep.simx_opmode_blocking)
         # print('return code is {}'.format(ret))
         # print('the resolution is {}'.format(res))
+        if ret!=0:
+            raise Exception('image data get wrong')
         data = 255-(np.array(data)+128)
         data = data.reshape(res[0], res[1], 3)
         data = data.astype(np.float32)
