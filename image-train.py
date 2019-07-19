@@ -38,27 +38,54 @@ def sample_data():
     time.sleep(1)
     rb.step_init()
     position_state = 0
-
+    index=0
 
     while True:
-        _, position = vrep.simxGetObjectPosition(
+
+        errorcode, position = vrep.simxGetObjectPosition(
+
             client_id, rb.body, -1, vrep.simx_opmode_blocking)
-        if position[0] < 5.2 and position_state == 0:
+
+        if position[0] < 4.6 and position_state == 0:
+
             rb.one_step(0.01)
-        elif position[0] >= 5.2:
+            capture(rb.get_image(),0,index)
+
+        elif position[0] >= 4.6 and position[1] < 1.3:
             if position_state == 0:
                 position_state = 1
+            
             rb.go_left()
-        elif 2.8 <= position[0] < 5.2:
+            capture(rb.get_image(),1,index)
+
+        elif position[0] > 5.6 and 2.7 > position[1] >= 1.3:  
             if position_state == 1:
                 position_state = 2
-            rb.one_step(0.01)
-        elif position[0] < 2.8:
+            rb.go_left()
+            capture(rb.get_image(),1,index)
+
+        elif 2.8 <= position[0] < 5.5 and 4.2 > position[1] >= 2.4:
             if position_state == 2:
                 position_state = 3
+            rb.one_step(0.01)
+            capture(rb.get_image(),0,index)
+
+        elif position[0] < 2.8 and 4.2 > position[1] >= 2.7:
+            if position_state == 3:
+                position_state = 4
             rb.go_right()
+            capture(rb.get_image(),2,index)
+
+        elif position[0] < 2.8 and 6.8 > position[1] >= 4.2:
+            if position_state == 4:
+                position_state = 5
+            rb.go_right()
+            capture(rb.get_image(),2,index)
+
         else:
             rb.one_step(0.01)
+            capture(rb.get_image(),0,index)
+        index+=1
 
 
 def build_model(X):
@@ -69,9 +96,9 @@ def build_model(X):
         keras.layers.Conv2D(64, (3, 3), activation='relu'),
         keras.layers.MaxPooling2D(pool_size=(2, 2)),
         keras.layers.Flatten(),
-        keras.layers.Dense(64, activation='sigmoid'),
-        keras.layers.Dense(64, activation='softmax'),
-        keras.layers.Dense(5)
+        keras.layers.Dense(64, activation='relu'),
+        # keras.layers.Dense(64, activation='softmax'),
+        keras.layers.Dense(5, activation='softmax')
     ])
 
     model.compile(loss='mean_squared_error',
@@ -82,39 +109,40 @@ def build_model(X):
 
 def train():
     # get data
-    label,data=get_data()
+    label, data = get_data()
     # build model
-    model=build_model(data)
+    model = build_model(data)
     # train
     tbCallBack = keras.callbacks.TensorBoard(log_dir='.\logs')
-    model.fit(data,label,batch_size = 32, epochs = 3, validation_split = 0.1, callbacks=[tbCallBack])
+    model.fit(data, label, batch_size=32, epochs=3,
+              validation_split=0.1, callbacks=[tbCallBack])
     # save model
     model.save('result.h5')
 
+
 def get_data():
-    #get file name
-    img_size=(28,28)
-    img_path='./image/'
-    label=[]
-    file_name_list=os.listdir(img_path)
-    data=np.zeros((1,)+img_size,dtype=np.int8)
+    # get file name
+    img_size = (28, 28)
+    img_path = './image/'
+    label = []
+    file_name_list = os.listdir(img_path)
+    data = np.zeros((1,)+img_size, dtype=np.int8)
     for file_name in file_name_list:
-        #data
-        file_name=img_path+file_name
+        # data
+        file_name = img_path+file_name
         img = cv2.imread(file_name)
         img_resize = cv2.resize(img, img_size)
         img_gray = cv2.cvtColor(img_resize, cv2.COLOR_RGB2GRAY)
         img_array = np.array(img_gray)
-        img_array=img_array.reshape((1,)+img_size)
-        data=np.concatenate([data,img_array],axis=0)
-        #label
-        label_name=int(os.path.splitext(file_name)[0].split('_')[-1])
+        img_array = img_array.reshape((1,)+img_size)
+        data = np.concatenate([data, img_array], axis=0)
+        # label
+        label_name = int(os.path.splitext(file_name)[0].split('_')[-1])
         label.append(label_name)
 
-    data=np.delete(data,0,axis=0)
-    label=np.array(label)
-    return label,data 
-    
+    data = np.delete(data, 0, axis=0)
+    label = np.array(label)
+    return label, data
 
 
 if __name__ == "__main__":
@@ -128,5 +156,5 @@ if __name__ == "__main__":
     #         else:
     #             data.reshape(-1)[j]=0
     # train()
-    # sample_data()
+    sample_data()
     pass

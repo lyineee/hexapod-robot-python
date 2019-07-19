@@ -240,7 +240,7 @@ class Hexapod(object):
         self.turn_left([20, 30])
 
     def go_right(self):
-        self.turn_right([20,25])
+        self.turn_right([20,34])
 
     def test(self):
         total_step = self.ahead_data.shape[0]-1
