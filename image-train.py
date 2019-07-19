@@ -9,7 +9,7 @@ import tensorflow as tf
 from tensorflow import keras
 
 import os
-
+import threading
 
 def connect(retry):
     while True:
@@ -26,10 +26,16 @@ def connect(retry):
             sys.exit(1)
         time.sleep(1)
 
-
-def capture(data, label, index):
-    cv2.imwrite('./image/image_{0}_{1}.jpg'.format(index, label), data)
-
+def cap_loop(ver,rb):
+    global lock
+    cap=ImgCap(ver)
+    while True:
+        lock.acquire()
+        try:
+            cap.capture(rb.get_image(),label)
+        finally:
+            lock.release()
+        time.sleep(0.2)
 
 def sample_data():
     client_id = connect(10)
@@ -38,54 +44,88 @@ def sample_data():
     time.sleep(1)
     rb.step_init()
     position_state = 0
-    index=0
+
+    #creat thread
+    global label,lock
+    label=0
+    lock=threading.Lock()
+    cap_th=threading.Thread(target=cap_loop,args=(0,rb))
+    cap_th.start()
 
     while True:
-
-        errorcode, position = vrep.simxGetObjectPosition(
-
-            client_id, rb.body, -1, vrep.simx_opmode_blocking)
-
+        lock.acquire()
+        try:
+            errorcode, position = vrep.simxGetObjectPosition(
+                client_id, rb.body, -1, vrep.simx_opmode_blocking)
+        finally:
+            lock.release()
         if position[0] < 4.6 and position_state == 0:
 
             rb.one_step(0.01)
-            capture(rb.get_image(),0,index)
+            # cap.capture(rb.get_image(),0)
+            label=0
 
         elif position[0] >= 4.6 and position[1] < 1.3:
             if position_state == 0:
                 position_state = 1
             
             rb.go_left()
-            capture(rb.get_image(),1,index)
+            # cap.capture(rb.get_image(),1)
+            label=1
 
         elif position[0] > 5.6 and 2.7 > position[1] >= 1.3:  
             if position_state == 1:
                 position_state = 2
             rb.go_left()
-            capture(rb.get_image(),1,index)
+            # cap.capture(rb.get_image(),1)
+            label=1
 
         elif 2.8 <= position[0] < 5.5 and 4.2 > position[1] >= 2.4:
             if position_state == 2:
                 position_state = 3
             rb.one_step(0.01)
-            capture(rb.get_image(),0,index)
+            # cap.capture(rb.get_image(),0)
+            label=0
 
         elif position[0] < 2.8 and 4.2 > position[1] >= 2.7:
             if position_state == 3:
                 position_state = 4
             rb.go_right()
-            capture(rb.get_image(),2,index)
+            # cap.capture(rb.get_image(),2)
+            label=2
 
         elif position[0] < 2.8 and 6.8 > position[1] >= 4.2:
             if position_state == 4:
                 position_state = 5
             rb.go_right()
-            capture(rb.get_image(),2,index)
+            # cap.capture(rb.get_image(),2)
+            label=2
 
         else:
             rb.one_step(0.01)
-            capture(rb.get_image(),0,index)
-        index+=1
+            # cap.capture(rb.get_image(),0)
+            label=0
+
+
+class ImgCap(object):
+    def __init__(self,ver):
+        self.index=0
+        self.ver=ver
+        self.create_dir('./image/{}'.format(self.ver))
+    
+    def capture(self,data, label):
+        data=cv2.cvtColor(data,cv2.COLOR_RGB2GRAY)
+        cv2.imwrite('./image/{0}/image_{1}_{2}.jpg'.format(self.ver,self.index, label), data)
+        self.index+=1
+
+    def create_dir(self,dirs):
+        if not os.path.exists(dirs):
+            os.makedirs(dirs)
+        else:
+            file_list=os.listdir('./image/{}'.format(self.ver))
+            if not file_list==[]:
+                for name in file_list:
+                    os.remove('./image/{0}/{1}'.format(self.ver,name))
 
 
 def build_model(X):
@@ -126,7 +166,7 @@ def get_data():
     img_path = './image/'
     label = []
     file_name_list = os.listdir(img_path)
-    data = np.zeros((1,)+img_size, dtype=np.int8)
+    data = np.zeros((1,)+img_size, dtype=np.float32)
     for file_name in file_name_list:
         # data
         file_name = img_path+file_name
@@ -156,5 +196,6 @@ if __name__ == "__main__":
     #         else:
     #             data.reshape(-1)[j]=0
     # train()
+    # cap=ImgCap(0)
     sample_data()
     pass

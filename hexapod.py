@@ -335,6 +335,7 @@ class Hexapod(object):
         # print('the resolution is {}'.format(res))
         data = 255-(np.array(data)+128)
         data = data.reshape(res[0], res[1], 3)
+        data = data.astype(np.float32)
         return data
 
     def image_test(self):
