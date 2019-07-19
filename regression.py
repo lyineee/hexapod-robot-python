@@ -45,6 +45,7 @@ def generate_use_data(sample_range,sample_rate):
         np.save('{}_use.npy'.format(pre[i]),result)
 
 def gen_data_for_arduino():
+    data_range=[80,470]
     pre=['./data/NN_ahead','./data/NN_middle','./data/NN_back']
     for i in range(3):
         row_data=np.load('{}_use.npy'.format(pre[i]))
@@ -53,13 +54,20 @@ def gen_data_for_arduino():
         # change the second data
         row_data[:,1]=-row_data[:,1]
         if pre[i]=='./data/NN_ahead':
-            row_data[:,0]=row_data[:,0]-90
+            row_data[:,0]=row_data[:,0]-45
         # convert into arduino data
-        row_result=512/225*row_data+307.2
+        # row_result=512/225*row_data+307.2
+        row_result=map(row_data,[-90,90],data_range)
         row_result=row_result.astype(np.int32)
         result=str(row_result).replace('[','{').replace(']','}').replace(' ',',')
         with open('{}_arduino.txt'.format(pre[i]),'w') as f:
             f.write(result)
+
+def map(input_num,input_range,output_range):
+    a=(output_range[1]-output_range[0])/(input_range[1]-input_range[0])
+    b=output_range[0]-input_range[0]*a
+    result=a*input_num+b
+    return result
 
         
 
@@ -93,7 +101,7 @@ if __name__ == "__main__":
     # graph('middle')
     # graph('ahead')
     # -10 - 100 55 - -55   
-    generate_use_data([[-10,45],[-25,30],[-50,10]],50)
-    # gen_data_for_arduino()
+    # generate_use_data([[-10,45],[-25,15],[-50,10]],50)
+    gen_data_for_arduino()
     pass
 
