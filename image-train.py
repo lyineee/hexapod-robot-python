@@ -123,5 +123,48 @@ class ImageTrain(object):
                 hit+=1
         print('total: {} hit: {} ,accuracy:{}'.format(total,hit,hit/total))
 
+def test_robot():
+    client_id = connect(10)
+    rb = Hexapod(client_id)
+
+    vrep.simxStartSimulation(client_id, vrep.simx_opmode_blocking)
+    time.sleep(1)
+    rb.step_init()
+
+    #creat thread
+    global state,lock
+    state=0 
+    lock=threading.Lock()
+    cap_th=threading.Thread(target=refresh_state,args=(rb,))
+    cap_th.start()
+
+    while True:
+        lock.acquire()
+        try:
+            if state==0:
+                rb.one_step(0.01)
+            elif state==1:
+                rb.go_left()
+            elif state==2:
+                rb.go_right()
+        finally:
+            lock.release()
+        print(state)
+
+def refresh_state(rb):
+    global state,lock
+    model=keras.models.load_model('result.h5')
+    while True:
+        img=rb.get_image()
+        img_gray=cv2.cvtColor(img,cv2.COLOR_RGB2GRAY)
+        img_resize=cv2.resize(img_gray,(32,32))
+        data=img_resize.reshape(1,32,32,1)
+        result=np.argmax(model.predict(data))
+        lock.acquire()
+        try:
+            state=result
+        finally:
+            lock.release()
+
 if __name__ == "__main__":
     pass
