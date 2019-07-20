@@ -1,28 +1,33 @@
 import pygame
-#import sys
+import sys
 
-pygame.init()  # 初始化pygame
-size = width, height = 1, 1  # 设置窗口大小
-screen = pygame.display.set_mode(size)  # 显示窗口
-direction = []
-while True:  # 死循环确保窗口一直显示
-    for event in pygame.event.get():  # 遍历所有事件
-        if event.type == pygame.KEYDOWN and event.key ==pygame.K_RIGHT:
-            print("turn right!")
-            rb.go_right()
-            direction.append(1)
 
-        elif event.type == pygame.KEYDOWN and event.key ==pygame.K_LEFT:
-            print("turn left!")
-            rb.go_left()
-            direction.append(-1)
+class KeyControl(object):
+    def __init__(self):
+        pygame.init()  # 初始化pygame
+        self.size = width, height = 5, 5  # 设置窗口大小
 
-        else:
-            print("go straight")
-            rb.one_step(0.01)
-            direction.append(0)
+    def start(self):
+        screen = pygame.display.set_mode(self.size)  # 显示窗口
+        direction = []
+    
+    def get_key(self):
+        state=None   
+        for event in pygame.event.get():  # 遍历所有事件
+            if event.type == pygame.KEYDOWN and event.key ==pygame.K_RIGHT:
+                state=2
+            elif event.type == pygame.KEYDOWN and event.key ==pygame.K_LEFT:
+                state=1
+            else:
+                state=0
+            if event.type == pygame.QUIT:  # 如果单击关闭窗口，则退出
+                self.end()
+        return state
+    def end(self):
+        pygame.quit()  # 退出pygame
+        sys.exit()
 
-        if event.type == pygame.QUIT:  # 如果单击关闭窗口，则退出
-            sys.exit()
-
-pygame.quit()  # 退出pygame
+if __name__ == "__main__":
+    key=KeyControl()
+    key.start()
+    
