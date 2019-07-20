@@ -28,7 +28,7 @@ class KeyControl(object):
                 state = 6
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_g:
                 state = 7
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_g:
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_h:
                 state = 8
             else:
                 state = 0

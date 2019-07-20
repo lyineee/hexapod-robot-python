@@ -44,15 +44,21 @@ def cap_loop(ver, rb, sleep_time):
     cap = ImgCap(ver)
     key.start()
     while True:
-        # lock.acquire()
+        if STATE==-1:
+            cap.create_dir()
+        if STATE==-2:
+            sys.exit(0)
         state = key.get_key()
         if state is not None:
             STATE = state
+        lock.acquire()
         try:
             cap.capture(rb.get_image(), STATE)
         except Exception as e:
             time.sleep(sleep_time)
             continue
+        finally:
+            lock.release()
         time.sleep(sleep_time)
 
 
@@ -67,7 +73,7 @@ def sample_data(ver, speed=0.05):
     # creat thread
     global STATE, lock
     STATE = 0
-    # lock=threading.Lock()
+    lock=threading.Lock()
     cap_th = threading.Thread(
         target=cap_loop, args=(ver, rb, 0.05), name='cap_th')
     # key_th=threading.Thread(target=key_loop,name='key_th')
@@ -93,15 +99,23 @@ def sample_data(ver, speed=0.05):
         elif STATE == 6:
             rb.turn_right([20, 30])
         elif STATE==7:
-            clean(ver)
+            # clean(ver)
+            STATE=-1
         elif STATE==8:
+            STATE=-2
+            cap_th.join()
             sys.exit(0)
 
 def clean(ver):
-    file_list = os.listdir('./image/{}'.format(self.ver))
+    global lock
+    file_list = os.listdir('./image/{}'.format(ver))
     if not file_list == []:
-        for name in file_list:
-            os.remove('./image/{0}/{1}'.format(ver, name))
+        lock.acquire()
+        try:
+            for name in file_list:
+                os.remove('./image/{0}/{1}'.format(ver, name))
+        finally:
+            lock.release()
 
 class ImgCap(object):
     def __init__(self, ver):
@@ -115,7 +129,10 @@ class ImgCap(object):
             './image/{0}/image_{1}_{2}.jpg'.format(self.ver, self.index, label), data)
         self.index += 1
 
-    def create_dir(self, dirs):
+    def create_dir(self, dirs=None):
+        if dirs==None:
+            dirs='./image/{}'.format(self.ver)
+        self.index=0
         if not os.path.exists(dirs):
             os.makedirs(dirs)
         else:
