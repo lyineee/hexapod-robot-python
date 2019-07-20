@@ -85,39 +85,27 @@ def sample_data(ver, speed=0.05):
     while True:
         if STATE == 0:
             rb.one_step(0.003)
-        #right
+        #left
         if STATE == 1:
-            rb.turn_left([5, 45])
+            rb.turn_left([10, 40])
         elif STATE == 2:
             rb.turn_left([20, 36])
         elif STATE == 3:
             rb.turn_left([20, 30])
-        #left
+        #right
         elif STATE == 4:
-            rb.turn_right([5, 45])
+            rb.turn_right([10, 40])
         elif STATE == 5:
             rb.turn_right([20, 36])
         elif STATE == 6:
             rb.turn_right([20, 30])
         elif STATE==7:
-            # clean(ver)
             STATE=-1
-        elif STATE==8:
+        elif STATE==8:  
             STATE=-2
             cap_th.join()
             rb.stop_simulation()
             sys.exit(0)
-
-def clean(ver):
-    global lock
-    file_list = os.listdir('./image/{}'.format(ver))
-    if not file_list == []:
-        lock.acquire()
-        try:
-            for name in file_list:
-                os.remove('./image/{0}/{1}'.format(ver, name))
-        finally:
-            lock.release()
 
 class ImgCap(object):
     def __init__(self, ver):
@@ -156,7 +144,7 @@ def cv2_test():
 
 
 if __name__ == "__main__":
-    sample_data(5, 0.01)
+    sample_data(17, 0.01)
     # test_robot()
     # print(predict(model,'./image/0/image_16_1.jpg'))
     pass
