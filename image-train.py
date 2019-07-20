@@ -3,6 +3,14 @@ from tensorflow import keras
 from tensorflow.keras import utils
 import cv2 
 
+import numpy as np
+import os
+import vrep 
+from hexapod import Hexapod,connect
+import time
+import threading
+
+
 
 
 class ImageTrain(object):
@@ -18,7 +26,7 @@ class ImageTrain(object):
             keras.layers.Dropout(0.1),
             keras.layers.Dense(64, activation='relu'),
             keras.layers.Dropout(0.1),
-            keras.layers.Dense(3, activation='softmax')
+            keras.layers.Dense(7, activation='softmax')
         ])
 
         model.compile(loss='categorical_crossentropy',
@@ -52,19 +60,19 @@ class ImageTrain(object):
         data_list=[]
         label_list=[]
         base_name='./image/{}/'
-        for i in range(4):
+        for i in range(6,16):
             name=base_name.format(i)
-            label,data=get_data(name)
+            label,data=self.get_data(name)
             data_list.append(data)
             label_list.append(label)
         data=np.concatenate(data_list,axis=0)
         label=np.concatenate(label_list,axis=0)
         # build model
-        # model = build_model(data)
-        model = lenet_5()
+        model = self.build_model(data)
+        # model = self.lenet_5()
         # train
         tbCallBack = keras.callbacks.TensorBoard(log_dir='.\logs')
-        model.fit(data, label, batch_size=32, epochs=40,
+        model.fit(data, label, batch_size=32, epochs=20,
                   validation_split=0.1, callbacks=[tbCallBack])
         # save model
         model.save('result.h5')
@@ -91,11 +99,13 @@ class ImageTrain(object):
             data = np.concatenate([data, img_array], axis=0)
             # label
             label_name = int(os.path.splitext(file_name)[0].split('_')[-1])
+            if label_name==7 or label_name==8:
+                label_name=0
             label.append(label_name)
 
         data = np.delete(data, 0, axis=0)
         label = np.array(label)
-        label=utils.to_categorical(label,num_classes=3)
+        label=utils.to_categorical(label,num_classes=7)
         return label, data
 
     def predict(self,model,filename):
@@ -112,9 +122,13 @@ class ImageTrain(object):
 
 
 
-    def test(self):
-        label,data=get_data('./image/4/')
+    def evaluate(self,var=0):
+        label,data=self.get_data('./image/{}/'.format(var))
         model=keras.models.load_model('result.h5')
+        # ues evaluate
+        # model.evaluate(data,label)
+
+        # use predict
         result=model.predict(data)
         total=len(label)
         hit=0
@@ -122,6 +136,9 @@ class ImageTrain(object):
             if np.argmax(label[i])==np.argmax(result[i]):
                 hit+=1
         print('total: {} hit: {} ,accuracy:{}'.format(total,hit,hit/total))
+
+    def clean_data():
+        pass
 
 def test_robot():
     client_id = connect(10)
@@ -141,12 +158,22 @@ def test_robot():
     while True:
         lock.acquire()
         try:
-            if state==0:
-                rb.one_step(0.01)
-            elif state==1:
-                rb.go_left()
-            elif state==2:
-                rb.go_right()
+            if state == 0:
+                rb.one_step(0.003)
+            #left
+            if state == 1:
+                rb.turn_left([10, 40])
+            elif state == 2:
+                rb.turn_left([20, 36])
+            elif state == 3:
+                rb.turn_left([20, 30])
+            #right
+            elif state == 4:
+                rb.turn_right([10, 40])
+            elif state == 5:
+                rb.turn_right([20, 36])
+            elif state == 6:
+                rb.turn_right([20, 30])
         finally:
             lock.release()
         print(state)
@@ -167,4 +194,8 @@ def refresh_state(rb):
             lock.release()
 
 if __name__ == "__main__":
+    # train=ImageTrain()
+    # train.train()
+    # train.evaluate(16)
+    # test_robot()
     pass
