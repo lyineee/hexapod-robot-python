@@ -1,4 +1,5 @@
 from hexapod import Hexapod
+# git pull --rebase origin master
 import vrep
 import cv2
 import numpy as np
