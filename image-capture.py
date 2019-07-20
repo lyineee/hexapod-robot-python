@@ -69,7 +69,6 @@ def sample_data(ver, speed=0.05):
     vrep.simxStartSimulation(client_id, vrep.simx_opmode_blocking)
     # time.sleep(1)
     rb.step_init()
-    position_state = 0
 
     # creat thread
     global STATE, lock
@@ -144,7 +143,7 @@ def cv2_test():
 
 
 if __name__ == "__main__":
-    sample_data(17, 0.01)
+    sample_data(88, 0.01)
     # test_robot()
     # print(predict(model,'./image/0/image_16_1.jpg'))
     pass
