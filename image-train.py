@@ -55,18 +55,10 @@ class ImageTrain(object):
                       metrics=['mean_absolute_error', 'mean_squared_error', 'accuracy'])
         return model
 
-    def train(self):
+    def train(self,file_range):
         # get data
-        data_list = []
-        label_list = []
-        base_name = './image/{}/'
-        for i in range(0, 86):
-            name = base_name.format(i)
-            label, data = self.get_data(name)
-            data_list.append(data)
-            label_list.append(label)
-        data = np.concatenate(data_list, axis=0)
-        label = np.concatenate(label_list, axis=0)
+        label,data=self.get_data_range(file_range)
+        label,data=self.rechoice(label,data)
         # build model
         model = self.build_model(data)
         # model = self.lenet_5()
@@ -76,6 +68,19 @@ class ImageTrain(object):
                   validation_split=0.1, callbacks=[tbCallBack])
         # save model
         model.save('result.h5')
+
+    def get_data_range(self,file_range):
+        data_list = []
+        label_list = []
+        base_name = './image/{}/'
+        for i in range(file_range):
+            name = base_name.format(i)
+            label, data = self.get_data(name)
+            data_list.append(data)
+            label_list.append(label)
+        data = np.concatenate(data_list, axis=0)
+        label = np.concatenate(label_list, axis=0)
+        return label,data
 
     def get_data(self, img_path='./image/1/'):
         # get file name
@@ -137,8 +142,21 @@ class ImageTrain(object):
                 hit += 1
         print('total: {} hit: {} ,accuracy:{}'.format(total, hit, hit/total))
 
-    def clean_data():
-        pass
+    def rechoice(self,label,data=None,num=6000):
+        # label,_=self.get_data_range(120)
+        label=np.argmax(label,axis=1)
+        e=np.random.choice(np.where(label==0)[0],15000)
+        a=np.random.choice(np.where(label==2)[0],num)
+        b=np.random.choice(np.where(label==3)[0],num)
+        c=np.random.choice(np.where(label==5)[0],num)
+        d=np.random.choice(np.where(label==6)[0],num)
+        result=np.concatenate([a,b,c,d,e])
+        label=label[result]
+        label=utils.to_categorical(label, num_classes=7)
+        if data is  None:
+            return label
+        data=data[result]
+        return label,data
 
 
 def test_robot():
@@ -165,16 +183,16 @@ def test_robot():
             if state == 1:
                 rb.turn_left([10, 40])
             elif state == 2:
-                rb.turn_left([20, 36])
+                rb.turn_left([20, 35])
             elif state == 3:
-                rb.turn_left([20, 28])
+                rb.turn_left([20, 30])
             # right
             elif state == 4:
                 rb.turn_right([10, 40])
             elif state == 5:
-                rb.turn_right([20, 36])
+                rb.turn_right([20, 35])
             elif state == 6:
-                rb.turn_right([20, 28])
+                rb.turn_right([20, 30])
         finally:
             lock.release()
         print(state)
@@ -195,10 +213,25 @@ def refresh_state(rb):
         finally:
             lock.release()
 
+def train_set_percentage():
+    test=ImageTrain()
+    label,_=test.get_data_range(175)
+    label=np.argmax(label,axis=1)
+    a=np.size(np.where(label==2))
+    b=np.size(np.where(label==3))
+    c=np.size(np.where(label==5))
+    d=np.size(np.where(label==6))
+    e=np.size(np.where(label==0))
+    total=a+b+c+d+e
+    print('2:{} 3:{} 5:{} 6:{} 0:{}'.format(a,b,c,d,e))
+
+
 
 if __name__ == "__main__":
+    # file_range=174
     # train = ImageTrain()
-    # train.train()
-    # train.evaluate(86)
+    # train.train(file_range)
+    # train.evaluate(file_range)
     test_robot()
+    # train_set_percentage()
     pass

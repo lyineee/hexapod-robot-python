@@ -99,7 +99,7 @@ def sample_data(ver, speed=0.05):
         # elif STATE == 6:
         #     rb.turn_right([20, 30])
         if STATE == 0:
-            rb.one_step(0.003)
+          rb.one_step(0.003)
         #left
         if STATE == 1:
             rb.turn_left([10, 40])
