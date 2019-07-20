@@ -104,6 +104,7 @@ def sample_data(ver, speed=0.05):
         elif STATE==8:
             STATE=-2
             cap_th.join()
+            rb.stop_simulation()
             sys.exit(0)
 
 def clean(ver):
