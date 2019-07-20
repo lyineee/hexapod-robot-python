@@ -144,9 +144,29 @@ def build_model(X):
 
     model.compile(loss='categorical_crossentropy',
                   optimizer='adam',
+                #   optimizer=keras.optimizers.SGD(learning_rate=0.0007),
                   metrics=['mean_absolute_error', 'mean_squared_error', 'accuracy'])
     return model
 
+def lenet_5(input_shape=(32,32,1),classes=3):
+    X_input=keras.layers.Input(input_shape)
+    X=keras.layers.ZeroPadding2D((1,1))(X_input)
+    X=keras.layers.Conv2D(6,(5,5),strides=(1,1),padding='valid',name='conv1')(X)
+    X=keras.layers.Activation('tanh')(X)
+    X=keras.layers.MaxPooling2D((2,2),strides=(2,2))(X)
+    X=keras.layers.Conv2D(6,(5,5),strides=(1,1),padding='valid',name='conv2')(X)
+    X=keras.layers.Activation('tanh')(X)
+    X=keras.layers.MaxPooling2D((2,2),strides=(2,2))(X)
+    X=keras.layers.Flatten()(X)
+    X=keras.layers.Dense(120,activation='tanh',name='fc1')(X)
+    X=keras.layers.Dense(84,activation='tanh',name='fc2')(X)
+    X=keras.layers.Dense(classes,activation='softmax')(X)
+    model=keras.Model(inputs=X_input,outputs=X,name='lenet_5')
+    model.compile(loss='categorical_crossentropy',
+              optimizer='adam',
+            #   optimizer=keras.optimizers.SGD(learning_rate=0.0007),
+              metrics=['mean_absolute_error', 'mean_squared_error', 'accuracy'])
+    return model
 
 def train():
     # get data
@@ -160,12 +180,12 @@ def train():
         label_list.append(label)
     data=np.concatenate(data_list,axis=0)
     label=np.concatenate(label_list,axis=0)
-    # label, data = get_data()
     # build model
-    model = build_model(data)
+    # model = build_model(data)
+    model = lenet_5()
     # train
     tbCallBack = keras.callbacks.TensorBoard(log_dir='.\logs')
-    model.fit(data, label, batch_size=32, epochs=20,
+    model.fit(data, label, batch_size=32, epochs=40,
               validation_split=0.1, callbacks=[tbCallBack])
     # save model
     model.save('result.h5')
@@ -183,6 +203,10 @@ def get_data(img_path='./image/1/'):
         img = cv2.imread(file_name)
         img_resize = cv2.resize(img, img_size)
         img_gray = cv2.cvtColor(img_resize, cv2.COLOR_RGB2GRAY)
+
+        # filter
+        img_gray=cv2.medianBlur(img_gray,3)
+
         img_array = np.array(img_gray)
         img_array = img_array.reshape((1,)+img_size+(1,))
         data = np.concatenate([data, img_array], axis=0)
@@ -260,11 +284,20 @@ def refresh_state(rb):
         finally:
             lock.release()
 
+def show_img(img):
+    cv2.namedWindow("Image") 
+    cv2.imshow("Image", img) 
+    cv2.waitKey (0)
+    cv2.destroyAllWindows()
+
+def cv2_test():
+    img=cv2.imread('./image/0/image_4_0.jpg')
+
 
 if __name__ == "__main__":
-    sample_data(5,0.01)
-    # train()
-    # test()
+    # sample_data(5,0.01)
+    train()
+    test()
     # test_robot()
     # print(predict(model,'./image/0/image_16_1.jpg'))
     pass
