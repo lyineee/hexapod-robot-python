@@ -82,6 +82,22 @@ def sample_data(ver, speed=0.05):
     # key_th.start()
 
     while True:
+        # if STATE == 0:
+        #     rb.one_step(0.003)
+        # #right
+        # if STATE == 1:
+        #     rb.turn_left([10, 40])
+        # elif STATE == 2:
+        #     rb.turn_left([20, 34])
+        # elif STATE == 3:
+        #     rb.turn_left([20, 30])
+        # #left
+        # elif STATE == 4:
+        #     rb.turn_right([10, 40])
+        # elif STATE == 5:
+        #     rb.turn_right([20, 34])
+        # elif STATE == 6:
+        #     rb.turn_right([20, 30])
         if STATE == 0:
             rb.one_step(0.003)
         #left
