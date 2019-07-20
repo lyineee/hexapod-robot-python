@@ -92,7 +92,16 @@ def sample_data(ver, speed=0.05):
             rb.turn_right([20, 36])
         elif STATE == 6:
             rb.turn_right([20, 30])
+        elif STATE==7:
+            clean(ver)
+        elif STATE==8:
+            sys.exit(0)
 
+def clean(ver):
+    file_list = os.listdir('./image/{}'.format(self.ver))
+    if not file_list == []:
+        for name in file_list:
+            os.remove('./image/{0}/{1}'.format(ver, name))
 
 class ImgCap(object):
     def __init__(self, ver):

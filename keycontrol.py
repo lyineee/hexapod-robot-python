@@ -26,6 +26,10 @@ class KeyControl(object):
                 state = 5
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_l:
                 state = 6
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_g:
+                state = 7
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_g:
+                state = 8
             else:
                 state = 0
             if event.type == pygame.QUIT:  # 如果单击关闭窗口，则退出
