@@ -33,7 +33,7 @@ class ImageTrain(object):
                       metrics=['mean_absolute_error', 'mean_squared_error', 'accuracy'])
         return model
 
-    def lenet_5(self, input_shape=(32, 32, 1), classes=3):
+    def lenet_5(self, input_shape=(32, 32, 1), classes=7):
         X_input = keras.layers.Input(input_shape)
         X = keras.layers.ZeroPadding2D((1, 1))(X_input)
         X = keras.layers.Conv2D(6, (5, 5), strides=(
@@ -57,8 +57,8 @@ class ImageTrain(object):
 
     def train(self,file_range):
         # get data
-        label,data=self.get_data_range(file_range)
-        label,data=self.rechoice(label,data)
+        label,data=self.get_data_range(176,266)
+        # label,data=self.rechoice(label,data)
         # build model
         model = self.build_model(data)
         # model = self.lenet_5()
@@ -69,11 +69,12 @@ class ImageTrain(object):
         # save model
         model.save('result.h5')
 
-    def get_data_range(self,file_range):
+    def get_data_range(self,start,end):
         data_list = []
         label_list = []
         base_name = './image/{}/'
-        for i in range(file_range):
+        #TODO modified
+        for i in range(start,end):
             name = base_name.format(i)
             label, data = self.get_data(name)
             data_list.append(data)
@@ -128,7 +129,8 @@ class ImageTrain(object):
         return model.predict(result)
 
     def evaluate(self, var=0):
-        label, data = self.get_data('./image/{}/'.format(var))
+        # label, data = self.get_data('./image/{}/'.format(var))
+        label, data = self.get_data_range(266,274)
         model = keras.models.load_model('result.h5')
         # ues evaluate
         # model.evaluate(data,label)
@@ -178,21 +180,21 @@ def test_robot():
         lock.acquire()
         try:
             if state == 0:
-                rb.one_step(0.003)
+                rb.one_step(0.002)
             # left
             if state == 1:
                 rb.turn_left([10, 40])
             elif state == 2:
                 rb.turn_left([20, 35])
             elif state == 3:
-                rb.turn_left([20, 30])
+                rb.turn_left([20, 29])
             # right
             elif state == 4:
                 rb.turn_right([10, 40])
             elif state == 5:
                 rb.turn_right([20, 35])
             elif state == 6:
-                rb.turn_right([20, 30])
+                rb.turn_right([20, 29])
         finally:
             lock.release()
         print(state)
@@ -228,10 +230,10 @@ def train_set_percentage():
 
 
 if __name__ == "__main__":
-    # file_range=174
+    # file_range=(176,193)
     # train = ImageTrain()
-    # train.train(file_range)
-    # train.evaluate(file_range)
+    # train.train(0)
+    # train.evaluate(193)
     test_robot()
     # train_set_percentage()
     pass

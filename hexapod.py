@@ -163,7 +163,7 @@ class Hexapod(object):
             time.sleep(time_0)
 
     def turn_right(self, right_range):
-        time_0 = 0.003
+        time_0 = 0.002
         total_step = self.ahead_data.shape[0]-1
         turn_step=max(right_range)-min(right_range)
         hang = 10
@@ -200,7 +200,7 @@ class Hexapod(object):
             time.sleep(time_0)
 
     def turn_left(self, left_range):
-        time_0 = 0.003
+        time_0 = 0.002
         total_step = self.ahead_data.shape[0]-1
         turn_step=max(left_range)-min(left_range)
         hang = 10

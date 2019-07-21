@@ -159,7 +159,7 @@ def cv2_test():
 
 
 if __name__ == "__main__":
-    sample_data(88, 0.01)
+    sample_data(999, 0.01)
     # test_robot()
     # print(predict(model,'./image/0/image_16_1.jpg'))
     pass
