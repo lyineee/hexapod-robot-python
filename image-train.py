@@ -55,9 +55,9 @@ class ImageTrain(object):
                       metrics=['mean_absolute_error', 'mean_squared_error', 'accuracy'])
         return model
 
-    def train(self,file_range):
+    def train(self,statr,end):
         # get data
-        label,data=self.get_data_range(176,266)
+        label,data=self.get_data_range(statr,end)
         # label,data=self.rechoice(label,data)
         # build model
         model = self.build_model(data)
@@ -73,7 +73,6 @@ class ImageTrain(object):
         data_list = []
         label_list = []
         base_name = './image/{}/'
-        #TODO modified
         for i in range(start,end):
             name = base_name.format(i)
             label, data = self.get_data(name)
@@ -129,8 +128,8 @@ class ImageTrain(object):
         return model.predict(result)
 
     def evaluate(self, var=0):
-        # label, data = self.get_data('./image/{}/'.format(var))
-        label, data = self.get_data_range(266,274)
+        label, data = self.get_data('./image/{}/'.format(var))
+        # label, data = self.get_data_range(266,274)
         model = keras.models.load_model('result.h5')
         # ues evaluate
         # model.evaluate(data,label)
@@ -145,14 +144,16 @@ class ImageTrain(object):
         print('total: {} hit: {} ,accuracy:{}'.format(total, hit, hit/total))
 
     def rechoice(self,label,data=None,num=6000):
-        # label,_=self.get_data_range(120)
         label=np.argmax(label,axis=1)
-        e=np.random.choice(np.where(label==0)[0],15000)
+        e=np.random.choice(np.where(label==0)[0],300)
         a=np.random.choice(np.where(label==2)[0],num)
         b=np.random.choice(np.where(label==3)[0],num)
         c=np.random.choice(np.where(label==5)[0],num)
         d=np.random.choice(np.where(label==6)[0],num)
+        # f=np.random.choice(np.where(label==1)[0],300)
+        # g=np.random.choice(np.where(label==4)[0],200)
         result=np.concatenate([a,b,c,d,e])
+        # result=np.concatenate([e,f,g])
         label=label[result]
         label=utils.to_categorical(label, num_classes=7)
         if data is  None:
@@ -217,23 +218,26 @@ def refresh_state(rb):
 
 def train_set_percentage():
     test=ImageTrain()
-    label,_=test.get_data_range(175)
+    label,_=test.get_data_range(987,1000)
     label=np.argmax(label,axis=1)
     a=np.size(np.where(label==2))
     b=np.size(np.where(label==3))
     c=np.size(np.where(label==5))
     d=np.size(np.where(label==6))
     e=np.size(np.where(label==0))
+    f=np.size(np.where(label==1))
+    g=np.size(np.where(label==4))
     total=a+b+c+d+e
-    print('2:{} 3:{} 5:{} 6:{} 0:{}'.format(a,b,c,d,e))
+    print('2:{} 3:{} 5:{} 6:{} 0:{} 1:{} 4:{}'.format(a,b,c,d,e,f,g))
 
 
 
 if __name__ == "__main__":
     # file_range=(176,193)
     # train = ImageTrain()
-    # train.train(0)
-    # train.evaluate(193)
+    # train.train(987,1000)
+    # train.evaluate(1000)
+    # train_set_percentage()
     test_robot()
     # train_set_percentage()
     pass

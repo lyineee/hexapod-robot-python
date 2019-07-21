@@ -99,17 +99,17 @@ def sample_data(ver, speed=0.05):
         # elif STATE == 6:
         #     rb.turn_right([20, 30])
         if STATE == 0:
-          rb.one_step(0.003)
+          rb.one_step(0.0015)
         #left
         if STATE == 1:
-            rb.turn_left([10, 40])
+            rb.turn_left([15, 40])
         elif STATE == 2:
             rb.turn_left([20, 36])
         elif STATE == 3:
             rb.turn_left([20, 30])
         #right
         elif STATE == 4:
-            rb.turn_right([10, 40])
+            rb.turn_right([15, 40])
         elif STATE == 5:
             rb.turn_right([20, 36])
         elif STATE == 6:
@@ -159,7 +159,7 @@ def cv2_test():
 
 
 if __name__ == "__main__":
-    sample_data(999, 0.01)
+    sample_data(2, 0.01)
     # test_robot()
     # print(predict(model,'./image/0/image_16_1.jpg'))
     pass
