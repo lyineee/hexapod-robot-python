@@ -284,26 +284,6 @@ class Hexapod(object):
                 #     time.sleep(0.01)
                 time.sleep(0.003)
 
-    def wait_for_stop(self, vrep_handle) -> tuple:
-        speed_list = []
-        object_speed = 10
-        start_time = vrep.simxGetLastCmdTime(self.client_id)
-        time.sleep(0.1)
-        while object_speed > 0.01:
-            _, object_speed, _ = vrep.simxGetObjectVelocity(
-                self.client_id, vrep_handle, vrep.simx_opmode_blocking)
-            speed = np.array(object_speed)
-            speed = np.sqrt(np.sum(np.power(object_speed, 2)))
-            object_speed = float(speed)
-            speed_list.append(object_speed)
-        end_time = vrep.simxGetLastCmdTime(self.client_id)
-        speed_list = np.array(speed_list)
-        # speed_sum=np.power(speed_list,2)
-        # speed_sum=np.sqrt(np.sum(speed_sum,axis=1))
-        speed_mean = float(np.mean(speed_list))
-        used_time = end_time-start_time
-        return speed_mean, used_time
-
     def get_time(self) -> float:
         time = vrep.simxGetLastCmdTime(self.client_id)
         return time
@@ -335,15 +315,12 @@ class Hexapod(object):
         # print('the resolution is {}'.format(res))
         if ret!=0:
             raise Exception('image data get wrong')
-        data = 255-(np.array(data)+128)
+        #TODO modified
+        data = np.array(data)+128
+        # data = 255-(np.array(data)+128)
         data = data.reshape(res[0], res[1], 3)
         data = data.astype(np.float32)
         return data
-
-    def image_test(self):
-        data = self.get_image(self.vision_sensor)
-        print(data)
-
 
 def map(input_num,input_range,output_range):
     a=(output_range[1]-output_range[0])/(input_range[1]-input_range[0])
@@ -375,8 +352,13 @@ def main():
     time.sleep(1)
     rb.step_init()
     # rb.test()
-    for _ in range(30):
-        rb.turn_right([20,34])
+    # for _ in range(30):
+    #     rb.turn_right([20,34])
+    # while True:
+    #     rb.one_step(0.002)
+    data=rb.get_image()
+    from utils.cv2_util import img_show
+    img_show(data)
 
 
 if __name__ == "__main__":
