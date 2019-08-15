@@ -1,16 +1,17 @@
-import vrep
 import math
-import time
 import sys
-import numpy as np
+import time
 
-from regression import generate_use_data
+import numpy as np
 from matplotlib import pyplot as plt
+
+import vrep
+from regression import generate_use_data
+
 # from tensorflow import keras
 
 
 class Hexapod(object):
-    pass
 
     def __init__(self, client_id):
         self.client_id = client_id
@@ -135,112 +136,124 @@ class Hexapod(object):
                     self.set_leg_position(4, self.middle_data[0]+[0, 1, 0])
                 time.sleep(time_0)
 
-    def one_step(self, time_0):
+    def one_step(self, time_0,stage=-1):
         total_step = self.ahead_data.shape[0]-1
         hang = 10
-        for i in range(total_step):
-            # ahead
-            self.set_leg_position(0, self.ahead_data[i])
-            self.set_leg_position(2, self.back_data[i])
-            self.set_leg_position(4, self.middle_data[i])
+        full_flag=False
+        if stage==-1:
+            full_flag=True
+        
+        if stage==1 or full_flag:
+            for i in range(total_step):
+                # ahead
+                self.set_leg_position(0, self.ahead_data[i])
+                self.set_leg_position(2, self.back_data[i])
+                self.set_leg_position(4, self.middle_data[i])
 
-            # back
-            self.set_leg_position(1, self.middle_data[total_step-i]+hang)
-            self.set_leg_position(3, self.ahead_data[total_step-i]+hang)
-            self.set_leg_position(5, self.back_data[total_step-i]+hang)
-            time.sleep(time_0)
+                # back
+                self.set_leg_position(1, self.middle_data[total_step-i]+hang)
+                self.set_leg_position(3, self.ahead_data[total_step-i]+hang)
+                self.set_leg_position(5, self.back_data[total_step-i]+hang)
+                time.sleep(time_0)
 
-        for i in range(total_step):
-            # ahead
-            self.set_leg_position(1, self.middle_data[i])
-            self.set_leg_position(3, self.ahead_data[i])
-            self.set_leg_position(5, self.back_data[i])
+        if stage==2 or full_flag:
+            for i in range(total_step):
+                # ahead
+                self.set_leg_position(1, self.middle_data[i])
+                self.set_leg_position(3, self.ahead_data[i])
+                self.set_leg_position(5, self.back_data[i])
+    
+                # back
+                self.set_leg_position(0, self.ahead_data[total_step-i]+hang)
+                self.set_leg_position(2, self.back_data[total_step-i]+hang)
+                self.set_leg_position(4, self.middle_data[total_step-i]+hang)
+                time.sleep(time_0)
 
-            # back
-            self.set_leg_position(0, self.ahead_data[total_step-i]+hang)
-            self.set_leg_position(2, self.back_data[total_step-i]+hang)
-            self.set_leg_position(4, self.middle_data[total_step-i]+hang)
-            time.sleep(time_0)
-
-    def turn_right(self, right_range):
+    def turn_right(self, right_range,stage=-1):
         time_0 = 0.0015
         total_step = self.ahead_data.shape[0]-1
-        turn_step=max(right_range)-min(right_range)
+        turn_step = max(right_range)-min(right_range)
         hang = 10
-        for i in range(total_step):
-            # ahead
-            self.set_leg_position(0, self.ahead_data[i])
-            self.set_leg_position(1, self.middle_data[total_step-i]+hang)
-            self.set_leg_position(2, self.back_data[i])
+        full_flag=False
+        if stage==-1:
+            full_flag=True
 
-            # back
-            if i <turn_step:
-                self.set_leg_position(
-                    3, self.ahead_data[right_range[0]:right_range[1]][turn_step-1-i]+hang)
-                self.set_leg_position(
-                    4, self.middle_data[right_range[0]:right_range[1]][i])
-                self.set_leg_position(
-                    5, self.back_data[right_range[0]:right_range[1]][turn_step-1-i]+hang)
-            time.sleep(time_0)
+        if stage==1 or full_flag:
+            for i in range(total_step):
+                # ahead
+                self.set_leg_position(0, self.ahead_data[i])
+                self.set_leg_position(1, self.middle_data[total_step-i]+hang)
+                self.set_leg_position(2, self.back_data[i])
 
-        for i in range(total_step):
-            # ahead
-            if i < turn_step:
-                self.set_leg_position(
-                    3, self.ahead_data[right_range[0]:right_range[1]][i])
-                self.set_leg_position(
-                    4, self.middle_data[right_range[0]:right_range[1]][turn_step-1-i]+hang)
-                self.set_leg_position(
-                    5, self.back_data[right_range[0]:right_range[1]][i])
+                # back
+                if i < turn_step:
+                    self.set_leg_position(
+                        3, self.ahead_data[right_range[0]:right_range[1]][turn_step-1-i]+hang)
+                    self.set_leg_position(
+                        4, self.middle_data[right_range[0]:right_range[1]][i])
+                    self.set_leg_position(
+                        5, self.back_data[right_range[0]:right_range[1]][turn_step-1-i]+hang)
+                time.sleep(time_0)
 
-            # back
-            self.set_leg_position(0, self.ahead_data[total_step-i]+hang)
-            self.set_leg_position(1, self.middle_data[i])
-            self.set_leg_position(2, self.back_data[total_step-i]+hang)
-            time.sleep(time_0)
+        if stage==2 or full_flag:
+            for i in range(total_step):
+                # ahead
+                if i < turn_step:
+                    self.set_leg_position(
+                        3, self.ahead_data[right_range[0]:right_range[1]][i])
+                    self.set_leg_position(
+                        4, self.middle_data[right_range[0]:right_range[1]][turn_step-1-i]+hang)
+                    self.set_leg_position(
+                        5, self.back_data[right_range[0]:right_range[1]][i])
+    
+                # back
+                self.set_leg_position(0, self.ahead_data[total_step-i]+hang)
+                self.set_leg_position(1, self.middle_data[i])
+                self.set_leg_position(2, self.back_data[total_step-i]+hang)
+                time.sleep(time_0)
 
-    def turn_left(self, left_range):
+    def turn_left(self, left_range,stage=-1):
         time_0 = 0.0015
         total_step = self.ahead_data.shape[0]-1
-        turn_step=max(left_range)-min(left_range)
+        turn_step = max(left_range)-min(left_range)
         hang = 10
+        full_flag=False
+        if stage==-1:
+            full_flag=True
 
-        for i in range(total_step):
-            if i<turn_step:
-                self.set_leg_position(
-                    0, self.ahead_data[left_range[0]:left_range[1]][i])
-                self.set_leg_position(
-                    1, self.middle_data[left_range[0]:left_range[1]][turn_step-1-i]+hang)
-                self.set_leg_position(
-                    2, self.back_data[left_range[0]:left_range[1]][i])
+        if stage == 1 or full_flag:
+            for i in range(total_step):
+                if i < turn_step:
+                    self.set_leg_position(
+                        0, self.ahead_data[left_range[0]:left_range[1]][i])
+                    self.set_leg_position(
+                        1, self.middle_data[left_range[0]:left_range[1]][turn_step-1-i]+hang)
+                    self.set_leg_position(
+                        2, self.back_data[left_range[0]:left_range[1]][i])
 
-            # back
-            self.set_leg_position(3, self.ahead_data[total_step-i]+hang)
-            self.set_leg_position(4, self.middle_data[i])
-            self.set_leg_position(5, self.back_data[total_step-i]+hang)
-            time.sleep(time_0)
+                # back
+                self.set_leg_position(3, self.ahead_data[total_step-i]+hang)
+                self.set_leg_position(4, self.middle_data[i])
+                self.set_leg_position(5, self.back_data[total_step-i]+hang)
+                time.sleep(time_0)
 
-        for i in range(total_step):
-            # ahead
-            self.set_leg_position(3, self.ahead_data[i])
-            self.set_leg_position(4, self.middle_data[total_step-i]+hang)
-            self.set_leg_position(5, self.back_data[i])
+        if stage == 2 or full_flag:
+            for i in range(total_step):
+                # ahead
+                self.set_leg_position(3, self.ahead_data[i])
+                self.set_leg_position(4, self.middle_data[total_step-i]+hang)
+                self.set_leg_position(5, self.back_data[i])
 
-            # back
-            if i <turn_step:
-                self.set_leg_position(
-                    1, self.middle_data[left_range[0]:left_range[1]][i])
-                self.set_leg_position(
-                    0, self.ahead_data[left_range[0]:left_range[1]][turn_step-1-i]+hang)
-                self.set_leg_position(
-                    2, self.back_data[left_range[0]:left_range[1]][turn_step-1-i]+hang)
-            time.sleep(time_0)
+                # back
+                if i < turn_step:
+                    self.set_leg_position(
+                        1, self.middle_data[left_range[0]:left_range[1]][i])
+                    self.set_leg_position(
+                        0, self.ahead_data[left_range[0]:left_range[1]][turn_step-1-i]+hang)
+                    self.set_leg_position(
+                        2, self.back_data[left_range[0]:left_range[1]][turn_step-1-i]+hang)
+                time.sleep(time_0)
 
-    def go_left(self):
-        self.turn_left([20, 30])
-
-    def go_right(self):
-        self.turn_right([20,36])
 
     def test(self):
         total_step = self.ahead_data.shape[0]-1
@@ -285,8 +298,8 @@ class Hexapod(object):
                 time.sleep(0.003)
 
     def get_time(self) -> float:
-        time = vrep.simxGetLastCmdTime(self.client_id)
-        return time
+        time_now = vrep.simxGetLastCmdTime(self.client_id)
+        return time_now
 
     def get_body_x_position(self) -> float:
         _, pos = vrep.simxGetObjectPosition(
@@ -313,24 +326,26 @@ class Hexapod(object):
             self.client_id, self.vision_sensor, 0, vrep.simx_opmode_blocking)
         # print('return code is {}'.format(ret))
         # print('the resolution is {}'.format(res))
-        if ret!=0:
+        if ret != 0:
             raise Exception('image data get wrong')
-        #TODO modified
+        # TODO modified
         data = np.array(data)+128
         # data = 255-(np.array(data)+128)
         data = data.reshape(res[0], res[1], 3)
         data = data.astype(np.float32)
         return data
 
-def map(input_num,input_range,output_range):
-    a=(output_range[1]-output_range[0])/(input_range[1]-input_range[0])
-    b=output_range[0]-input_range[0]*a
-    result=a*input_num+b
+
+def map(input_num, input_range, output_range):
+    a = (output_range[1]-output_range[0])/(input_range[1]-input_range[0])
+    b = output_range[0]-input_range[0]*a
+    result = a*input_num+b
     return result
 
+
 def connect(retry):
+    vrep.simxFinish(-1)  # 关掉之前的连接
     while True:
-        # vrep.simxFinish(-1)  # 关掉之前的连接
         clientId = vrep.simxStart(
             "127.0.0.1", 19997, True, True, 100, 5)  # 建立和服务器的连接
         if clientId != -1:  # 连接成功
@@ -356,7 +371,7 @@ def main():
     #     rb.turn_right([20,34])
     # while True:
     #     rb.one_step(0.002)
-    data=rb.get_image()
+    data = rb.get_image()
     from utils.cv2_util import img_show
     img_show(data)
 

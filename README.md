@@ -52,3 +52,8 @@ cv2 图片似乎支持两种格式
 ## 其他
 
 1. 训练集数组为`np.uint8`
+
+## 解决使用cv2是pylint的报错  `Module 'cv2' has no **** member`
+
+1. 使用`from cv2 import cv2`
+2. 更改pylint设置`pylint --extension-pkg-whitelist=cv2`
