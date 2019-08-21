@@ -4,6 +4,7 @@ import time
 
 import numpy as np
 from matplotlib import pyplot as plt
+from math import sqrt
 
 import vrep
 from regression import generate_use_data
@@ -136,6 +137,16 @@ class Hexapod(object):
                     self.set_leg_position(4, self.middle_data[0]+[0, 1, 0])
                 time.sleep(time_0)
 
+    def keep_step(self,time_0,q):
+        self.step_init()
+        while True:
+            try:
+                self.one_step(time_0)
+                if not q.empty():
+                    break
+            except:
+                break
+
     def one_step(self, time_0,stage=-1):
         total_step = self.ahead_data.shape[0]-1
         hang = 10
@@ -169,8 +180,45 @@ class Hexapod(object):
                 self.set_leg_position(4, self.middle_data[total_step-i]+hang)
                 time.sleep(time_0)
 
-    def turn_right(self, right_range,stage=-1):
-        time_0 = 0.0015
+    def one_step_t(self, time_0,stage=-1):
+        total_step = self.ahead_data.shape[0]-1
+        hang = 10
+        full_flag=False
+        if stage==-1:
+            full_flag=True
+        index=0
+        
+        if stage==1 or full_flag:
+            for i in range(total_step):
+                # ahead
+                self.set_leg_position(0, self.ahead_data[i])
+                self.set_leg_position(2, self.back_data[i])
+                self.set_leg_position(4, self.middle_data[i])
+
+                # back
+                hang=-0.04444*(index**2)+1.3333*index
+                self.set_leg_position(1, self.middle_data[total_step-i]+hang)
+                self.set_leg_position(3, self.ahead_data[total_step-i]+hang)
+                self.set_leg_position(5, self.back_data[total_step-i]+hang)
+                time.sleep(time_0)
+                index+=1
+        index=0
+        if stage==2 or full_flag:
+            for i in range(total_step):
+                # ahead
+                self.set_leg_position(1, self.middle_data[i])
+                self.set_leg_position(3, self.ahead_data[i])
+                self.set_leg_position(5, self.back_data[i])
+    
+                # back
+                hang=-0.04444*(index**2)+1.3333*index
+                self.set_leg_position(0, self.ahead_data[total_step-i]+hang)
+                self.set_leg_position(2, self.back_data[total_step-i]+hang)
+                self.set_leg_position(4, self.middle_data[total_step-i]+hang)
+                time.sleep(time_0)
+                index+=1
+
+    def turn_right(self, right_range,stage=-1,time_0 = 0.005):
         total_step = self.ahead_data.shape[0]-1
         turn_step = max(right_range)-min(right_range)
         hang = 10
@@ -212,8 +260,7 @@ class Hexapod(object):
                 self.set_leg_position(2, self.back_data[total_step-i]+hang)
                 time.sleep(time_0)
 
-    def turn_left(self, left_range,stage=-1):
-        time_0 = 0.0015
+    def turn_left(self, left_range,stage=-1,time_0 = 0.005):
         total_step = self.ahead_data.shape[0]-1
         turn_step = max(left_range)-min(left_range)
         hang = 10
@@ -304,7 +351,7 @@ class Hexapod(object):
     def get_body_x_position(self) -> float:
         _, pos = vrep.simxGetObjectPosition(
             self.client_id, self.body, -1, vrep.simx_opmode_blocking)
-        pos_x = pos[1]
+        pos_x = pos[0]
         return pos_x
 
     def start_simulation(self):
@@ -318,6 +365,11 @@ class Hexapod(object):
         # status=-1
         # while status!=1:
         status = vrep.simxStopSimulation(
+            self.client_id, vrep.simx_opmode_oneshot)
+        time.sleep(0.5)
+    
+    def pause_simulation(self):
+        status = vrep.simxPauseSimulation(
             self.client_id, vrep.simx_opmode_oneshot)
         time.sleep(0.5)
 
@@ -334,6 +386,12 @@ class Hexapod(object):
         data = data.reshape(res[0], res[1], 3)
         data = data.astype(np.float32)
         return data
+
+    def show_speed(self):
+        _, spe, _ = vrep.simxGetObjectVelocity(
+            self.client_id, self.body, vrep.simx_opmode_oneshot)
+        # speed
+        print(sqrt(spe[0]**2+spe[1]**2+spe[2]**2),end='\r')
 
 
 def map(input_num, input_range, output_range):
@@ -369,11 +427,18 @@ def main():
     # rb.test()
     # for _ in range(30):
     #     rb.turn_right([20,34])
-    # while True:
-    #     rb.one_step(0.002)
-    data = rb.get_image()
-    from utils.cv2_util import img_show
-    img_show(data)
+    while True:
+        s_t=time.time()
+        # rb.one_step(0.003)
+        # good 
+        rb.one_step_t(0.003)
+        # rb.one_step(0.005)
+        # rb.one_step_t(0.1)
+        rb.show_speed()
+        # print(time.time()-s_t)
+    # data = rb.get_image()
+    # from utils.cv2_util import img_show
+    # img_show(data)
 
 
 if __name__ == "__main__":

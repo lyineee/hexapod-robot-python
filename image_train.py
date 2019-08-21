@@ -1,4 +1,4 @@
-#%%
+# %%
 import os
 import threading
 import time
@@ -12,10 +12,12 @@ from tensorflow.keras import utils
 import vrep
 from hexapod import Hexapod, connect
 
-#%%
+# %%
+
+
 class ImageTrain(object):
 
-    def build_model(self, data,label,lr=0.0005):
+    def build_model(self, data, label, lr=0.0005):
         model = keras.Sequential([
             keras.layers.Conv2D(64, (2, 2), activation='relu',
                                 input_shape=data.shape[1:]),
@@ -31,8 +33,8 @@ class ImageTrain(object):
         ])
 
         model.compile(loss='categorical_crossentropy',
-                        # optimizer='adam',
-                    #   optimizer=keras.optimizers.SGD(lr=0.00005),
+                      # optimizer='adam',
+                      #   optimizer=keras.optimizers.SGD(lr=0.00005),
                       optimizer=keras.optimizers.SGD(lr),
                       metrics=['mean_absolute_error', 'mean_squared_error', 'accuracy'])
         return model
@@ -59,7 +61,7 @@ class ImageTrain(object):
                       metrics=['mean_absolute_error', 'mean_squared_error', 'accuracy'])
         return model
 
-    def train(self,data=None,label=None):
+    def train(self, data=None, label=None):
         # get data
         # label,data=self.get_data_range(statr,end)
         if data is None or label is None:
@@ -68,9 +70,10 @@ class ImageTrain(object):
         permutation = np.random.permutation(label.shape[0])
         data = data[permutation]
         label = label[permutation]
-        label, data = self.rechoice(label, data)
+        label, data = self.rechoice(
+            label, data, num=[5000, 0, 2300, 2300, 0, 2300, 2300])
         # build model
-        model = self.build_model(data,label)
+        model = self.build_model(data, label)
         # model = self.lenet_5()
         # train
         # tbCallBack = keras.callbacks.TensorBoard(log_dir='.\logs')
@@ -79,7 +82,7 @@ class ImageTrain(object):
         # save model
         model.save('result.h5')
 
-    def get_data_range(self, dir_name,start, end):
+    def get_data_range(self, dir_name, start, end):
         data_list = []
         label_list = []
         base_name = dir_name+'{}/'
@@ -147,6 +150,9 @@ class ImageTrain(object):
             # filter
             img_gray = cv2.medianBlur(img_gray, 3)
 
+            # TODO binary
+            img_gray = cv2.threshold(img_gray, 128, 255, cv2.THRESH_BINARY)[1]
+
             img_array = np.array(img_gray)
             img_array = img_array.reshape((1,)+img_size+(1,))
             data[i] = img_array
@@ -193,13 +199,14 @@ class ImageTrain(object):
                 hit += 1
         print('total: {} hit: {} ,accuracy:{}'.format(total, hit, hit/total))
 
-    def rechoice(self, label, data=None, num=None,shuffle=True,num_classes=7):
-        assert(num!=None)
+    def rechoice(self, label, data=None, num=None, shuffle=True, num_classes=7):
+        assert(num != None)
         label = np.argmax(label, axis=1)
-        con_list=[]
-        data_list=[0,1,2,3,4,5,6]
-        for i,element in enumerate(num):
-            con_list.append(np.random.choice(np.where(label == data_list[i])[0],element))
+        con_list = []
+        data_list = [0, 1, 2, 3, 4, 5, 6]
+        for i, element in enumerate(num):
+            con_list.append(np.random.choice(
+                np.where(label == data_list[i])[0], element))
         # e = np.random.choice(np.where(label == 0)[0],  num[0])
         # a = np.random.choice(np.where(label == 2)[0],  num[1])
         # b = np.random.choice(np.where(label == 3)[0],  num[2])
@@ -215,7 +222,7 @@ class ImageTrain(object):
             return label
         data = data[result]
         return label, data
- 
+
 
 def test_robot(model_name='result.h5'):
     client_id = connect(10)
@@ -230,46 +237,47 @@ def test_robot(model_name='result.h5'):
     global state, lock
     state = 0
     lock = threading.Lock()
-    cap_th = threading.Thread(target=refresh_state, args=(rb,model_name))
+    cap_th = threading.Thread(target=refresh_state, args=(rb, model_name))
     cap_th.start()
-    stage=1
-    
+    stage = 1
 
     while True:
-        time_s=time.time()
+        time_s = time.time()
         lock.acquire()
         try:
-            if state == 0:
-                rb.one_step(0.002,stage)
-            # left
-            if state == 1:
-                rb.turn_left([10, 40],stage)
-            elif state == 2:
-                # rb.turn_left([20, 34],stage)
-                rb.turn_left([20, 39],stage)
-            elif state == 3:
-                # rb.turn_left([20, 29],stage)
-                rb.turn_left([20, 25],stage)
-            # right
-            elif state == 4:
-                rb.turn_right([10, 40],stage)
-            elif state == 5:
-                # rb.turn_right([20, 34],stage)
-                rb.turn_right([20, 39],stage)
-            elif state == 6:
-                # rb.turn_right([20, 29],stage)
-                rb.turn_right([20, 25],stage)
-
-            if stage==1:
-                stage=2
-            else:
-                stage=1
-
+            state_t = state
         finally:
             lock.release()
-            pass
+
+        if state_t == 0:
+            rb.one_step(0.005, stage)
+        # left
+        if state_t == 1:
+            rb.turn_left([10, 40], stage)
+        elif state_t == 2:
+            # rb.turn_left([20, 39],stage)
+            rb.turn_left([10, 20], stage)
+        elif state_t == 3:
+            # rb.turn_left([20, 25],stage)
+            rb.turn_left([10, 15], stage)
+        # right
+        elif state_t == 4:
+            rb.turn_right([10, 40], stage)
+        elif state_t == 5:
+            # rb.turn_right([20, 39],stage)
+            rb.turn_right([10, 20], stage)
+        elif state_t == 6:
+            # rb.turn_right([20, 25],stage)
+            rb.turn_right([10, 15], stage)
+
+        if stage == 1:
+            stage = 2
+        else:
+            stage = 1
+
+        # rb.show_speed()
         print('state:{}'.format(state),'step_time_use:{}'.format(str(time.time()-time_s)),end='\r')
-        # print('step_time_use:{}'.format(str(time.time()-time_s)),end='\r')
+        # print('step_time_use:{}'.format(str(time.time()-)),end='\r')
 
 
 def control(img):
@@ -292,21 +300,31 @@ def control(img):
     return result
 
 
-def refresh_state(rb,model_name):
+def refresh_state(cap, model_name):
     global state, lock
     model_1 = keras.models.load_model(model_name)
-    model=keras.models.load_model('result-v0.2.h5')
+    model = keras.models.load_model('result.h5')
     cv2.namedWindow('sensor')
     while True:
-        img = rb.get_image()
-        img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-        img_resize = cv2.resize(img_gray, (64, 64))
+        lock.acquire()
+        try:
+            img = cap.get_image()
+        finally:
+            lock.release()
+        # ret,img = cap.read()
+        img_resize = cv2.resize(img, (64, 64))
+        # img_resize=np.rot90(img_resize)
+        img_gray = cv2.cvtColor(img_resize, cv2.COLOR_RGB2GRAY)
+
         # filter
-        img_gray = cv2.medianBlur(img_resize, 3)
+        img_gray = cv2.medianBlur(img_gray, 3)
         img_gray = np.rot90(img_gray)
         # img_gray=np.rot90(img_gray)
         # img_gray=np.rot90(img_gray)
         img_gray = cv2.flip(img_gray, 1)
+
+        img_gray = cv2.threshold(img_gray, 128, 255, cv2.THRESH_BINARY)[1]
+
 
         # from utils.cv2_util import edge_det
         # img_gray=edge_det(img_gray)
@@ -314,15 +332,15 @@ def refresh_state(rb,model_name):
         # from utils.cv2_util import img_show
         # img_show(img_gray)
         result = 0
-        cv2.imshow('sensor', cv2.resize(
-            img_gray.astype(np.uint8), (320, 320)))
-        cv2.waitKey(1)
         float_data = img_gray.reshape(1, 64, 64, 1)
         data = float_data.astype(np.uint8)
-        if np.argmax(model_1.predict(data))==1:
+        cv2.imshow('sensor', cv2.resize(
+            data.reshape(64,64).astype(np.uint8), (320, 320)))
+        cv2.waitKey(1)
+        if np.argmax(model_1.predict(data)) == 1:
             result = np.argmax(model.predict(data))
         else:
-            result=0
+            result = 0
 
         # result=control(img_gray)
 
@@ -332,6 +350,7 @@ def refresh_state(rb,model_name):
             state = result
         finally:
             lock.release()
+        time.sleep(0.2)
 
 
 def train_set_percentage(label=None):
@@ -349,19 +368,23 @@ def train_set_percentage(label=None):
     total = a+b+c+d+e
     print('2:{} 3:{} 5:{} 6:{} 0:{} 1:{} 4:{}'.format(a, b, c, d, e, f, g))
 
-#%%
+
+# %%
 if __name__ == "__main__":
     # 2:6167 3:7705 5:7340 6:6739 0:15211
     # train_set_percentage(label)
-#%%
+    # train_set_percentage()
+    # %%
     # train = ImageTrain()
-#%%
+    # %%
     # label, data = train.get_data('./image/archive-normal/')
     # label,data=train.get_data_range('./image/archive-normal/{}/',0,176)
-#%%
+    # %%
     # train.train(data=data,label=label)
-#%%
+    # train.train()
+    # %%
     test_robot('turn_straight_cla_v0.2.h5')
+    # refresh_state(cv2.VideoCapture('http://192.168.1.1:4455/?action=stream'),'turn_straight_cla_v0.2.h5')
     pass
 
 # 5000

@@ -5,7 +5,6 @@ import time
 
 import cv2
 import numpy as np
-import pygame
 
 # git pull --rebase origin master
 import vrep
@@ -207,6 +206,4 @@ if __name__ == "__main__":
     while True:
         sample_data(ver, rb, 0.01)
         ver += 1
-    # test_robot()
-    # print(predict(model,'./image/0/image_16_1.jpg'))
     pass

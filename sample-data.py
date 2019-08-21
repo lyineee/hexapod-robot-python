@@ -107,15 +107,19 @@ class Leg(object):
                 raise Exception("init error when get handle") 
             else:
                 data.append(self.degre(pos))
-        return data[0],data[1:]
+        status,tip_pos=vrep.simxGetObjectPosition(self.client_id,self.tip_handle,-1,vrep.simx_opmode_blocking)
+        tip_pos_x=self.degre(tip_pos[0])
+        # print(data)
+        # return data[0],data[1:]
+        return tip_pos_x,data
 
     def sample(self):
-        init_pos=self.get_tip_pos()
-        if abs(init_pos-self.last_tip_pos) > 1:
-            label,data=self.get_data()
-            self.label.append(label)
-            self.data.append(data)
-            # print(label)
+        # init_pos=self.get_tip_pos()
+        # if abs(init_pos-self.last_tip_pos) > 1:
+        label,data=self.get_data()
+        self.label.append(label)
+        self.data.append(data)
+        # print(label)
         
     def sample_loop(self):
         while True:
@@ -136,7 +140,7 @@ class Leg(object):
 
 def connect(retry):
     while True:
-        # vrep.simxFinish(-1)  # 关掉之前的连接
+        vrep.simxFinish(-1)  # 关掉之前的连接
         clientId = vrep.simxStart(
             "127.0.0.1", 19997, True, True, 100, 5)  # 建立和服务器的连接
         if clientId != -1:  # 连接成功

@@ -57,3 +57,10 @@ cv2 图片似乎支持两种格式
 
 1. 使用`from cv2 import cv2`
 2. 更改pylint设置`pylint --extension-pkg-whitelist=cv2`
+
+## 赛道制作
+
+1. pv纸 80cm 宽:制作大弯
+2. 0.6 * 0.9 似乎最便宜
+
+
