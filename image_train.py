@@ -253,22 +253,22 @@ def test_robot(model_name='result.h5'):
             rb.one_step(0.005, stage)
         # left
         if state_t == 1:
-            rb.turn_left([10, 40], stage)
+            rb.turn_left([10, 28], stage)
         elif state_t == 2:
             # rb.turn_left([20, 39],stage)
-            rb.turn_left([10, 20], stage)
+            rb.turn_left([10, 26], stage)
         elif state_t == 3:
             # rb.turn_left([20, 25],stage)
-            rb.turn_left([10, 15], stage)
+            rb.turn_left([10, 21], stage)
         # right
         elif state_t == 4:
-            rb.turn_right([10, 40], stage)
+            rb.turn_right([10, 28], stage)
         elif state_t == 5:
             # rb.turn_right([20, 39],stage)
-            rb.turn_right([10, 20], stage)
+            rb.turn_right([10, 24], stage)
         elif state_t == 6:
             # rb.turn_right([20, 25],stage)
-            rb.turn_right([10, 15], stage)
+            rb.turn_right([10, 21], stage)
 
         if stage == 1:
             stage = 2
@@ -303,7 +303,7 @@ def control(img):
 def refresh_state(cap, model_name):
     global state, lock
     model_1 = keras.models.load_model(model_name)
-    model = keras.models.load_model('result.h5')
+    model = keras.models.load_model('./dont_kown.h5')
     cv2.namedWindow('sensor')
     while True:
         lock.acquire()

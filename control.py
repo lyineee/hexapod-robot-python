@@ -16,12 +16,16 @@ class RobotControl(object):
         self.line_tracker_model = keras.models.load_model('./result_v1.0.h5')
         self.sa_det_mode = keras.models.load_model(
             './turn_straight_cla_v0.2.h5')
-        self.first_flag = True
 
     def bluetooth_connect(self):
-        self.bz.connect(5)
+        while not self.bz.is_bluetooth_connected:
+            try:
+                self.bz.connect(5)
+            except:
+                pass
+        print('connect success')
 
-    def get_state(self, show_image_window=None):
+    def get_state(self, show_window=False):
         assert(self.cap is not None)
         # TODO ret judge
         ret, img = self.cap.read()
@@ -33,17 +37,12 @@ class RobotControl(object):
             img_gray = cv2.medianBlur(img_gray, 3)
 
             # bin
-            img_gray = cv2.threshold(img_gray, 128, 255, cv2.THRESH_BINARY)[1]
+            img_gray = cv2.threshold(img_gray, 30, 255, cv2.THRESH_BINARY)[1]
+
+            #reverse the color
             img_gray = 255 - img_gray
 
-            # img_gray = img_gray+128
-            # img_gray = np.rot90(img_gray)
-            # img_gray = np.rot90(img_gray)
-            # img_gray = cv2.flip(img_gray, 1)
-
             # predict
-            # cv2.imshow('origin', cv2.resize(
-            #     img.astype(np.uint8), (320, 320)))
             float_data = img_gray.reshape(1, 64, 64, 1)
             data = float_data.astype(np.uint8)
             if np.argmax(self.sa_det_mode.predict(data)) == 1:
@@ -52,21 +51,25 @@ class RobotControl(object):
                 state = 0
             self.state = state
 
-            if show_image_window is not None:
+            if show_window:
                 img_num = cv2.putText(cv2.resize(
-                    cv2.threshold(img_resize, 128, 255, cv2.THRESH_BINARY)[1].astype(np.uint8),(320, 320)), str(self.state), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                    cv2.threshold(img_resize, 30, 255, cv2.THRESH_BINARY)[1].astype(np.uint8),(320, 320)), str(self.state), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
                 cv2.imshow('sensor',img_num )
                 cv2.waitKey(1)
 
     def loop(self):
         while True:
-            self.get_state(show_image_window=True)
+            self.get_state(show_window=True)
             print(self.state, end='\r')
-            self.bz.send(self.state)
+            try:
+                self.bz.send(self.state)
+            except:
+                self.bluetooth_connect()
+                
 
 
 if __name__ == "__main__":
     control = RobotControl()
     # control.cap=
-    control.bluetooth_connect()
+    # control.bluetooth_connect()
     control.loop()
