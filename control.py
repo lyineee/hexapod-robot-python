@@ -27,7 +27,6 @@ class RobotControl(object):
 
     def get_state(self, show_window=False):
         assert(self.cap is not None)
-        # TODO ret judge
         ret, img = self.cap.read()
         if ret:
             img_resize = cv2.resize(img, (64, 64))
@@ -36,7 +35,7 @@ class RobotControl(object):
             # filter
             img_gray = cv2.medianBlur(img_gray, 3)
 
-            # bin
+            # binary
             img_gray = cv2.threshold(img_gray, 30, 255, cv2.THRESH_BINARY)[1]
 
             #reverse the color
@@ -52,8 +51,9 @@ class RobotControl(object):
             self.state = state
 
             if show_window:
+                img_rgb=cv2.cvtColor(img_resize,cv2.COLOR_GRAY2RGB)
                 img_num = cv2.putText(cv2.resize(
-                    cv2.threshold(img_resize, 30, 255, cv2.THRESH_BINARY)[1].astype(np.uint8),(320, 320)), str(self.state), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                    cv2.threshold(img_rgb, 30, 255, cv2.THRESH_BINARY)[1].astype(np.uint8),(320, 320)), str(self.state), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
                 cv2.imshow('sensor',img_num )
                 cv2.waitKey(1)
 
@@ -70,6 +70,4 @@ class RobotControl(object):
 
 if __name__ == "__main__":
     control = RobotControl()
-    # control.cap=
-    # control.bluetooth_connect()
     control.loop()

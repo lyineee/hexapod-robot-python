@@ -256,19 +256,19 @@ def test_robot(model_name='result.h5'):
             rb.turn_left([10, 28], stage)
         elif state_t == 2:
             # rb.turn_left([20, 39],stage)
-            rb.turn_left([10, 26], stage)
+            rb.turn_left([10, 23], stage)
         elif state_t == 3:
             # rb.turn_left([20, 25],stage)
-            rb.turn_left([10, 21], stage)
+            rb.turn_left([10, 16], stage)
         # right
         elif state_t == 4:
             rb.turn_right([10, 28], stage)
         elif state_t == 5:
             # rb.turn_right([20, 39],stage)
-            rb.turn_right([10, 24], stage)
+            rb.turn_right([10, 23], stage)
         elif state_t == 6:
             # rb.turn_right([20, 25],stage)
-            rb.turn_right([10, 21], stage)
+            rb.turn_right([10, 16], stage)
 
         if stage == 1:
             stage = 2
@@ -276,7 +276,8 @@ def test_robot(model_name='result.h5'):
             stage = 1
 
         # rb.show_speed()
-        print('state:{}'.format(state),'step_time_use:{}'.format(str(time.time()-time_s)),end='\r')
+        print('state:{}'.format(state), 'step_time_use:{}'.format(
+            str(time.time()-time_s)), end='\r')
         # print('step_time_use:{}'.format(str(time.time()-)),end='\r')
 
 
@@ -303,7 +304,7 @@ def control(img):
 def refresh_state(cap, model_name):
     global state, lock
     model_1 = keras.models.load_model(model_name)
-    model = keras.models.load_model('./dont_kown.h5')
+    model = keras.models.load_model('./result.h5')
     cv2.namedWindow('sensor')
     while True:
         lock.acquire()
@@ -325,7 +326,6 @@ def refresh_state(cap, model_name):
 
         img_gray = cv2.threshold(img_gray, 128, 255, cv2.THRESH_BINARY)[1]
 
-
         # from utils.cv2_util import edge_det
         # img_gray=edge_det(img_gray)
 
@@ -334,9 +334,6 @@ def refresh_state(cap, model_name):
         result = 0
         float_data = img_gray.reshape(1, 64, 64, 1)
         data = float_data.astype(np.uint8)
-        cv2.imshow('sensor', cv2.resize(
-            data.reshape(64,64).astype(np.uint8), (320, 320)))
-        cv2.waitKey(1)
         if np.argmax(model_1.predict(data)) == 1:
             result = np.argmax(model.predict(data))
         else:
@@ -350,6 +347,12 @@ def refresh_state(cap, model_name):
             state = result
         finally:
             lock.release()
+
+        img_rgb=cv2.cvtColor(img_gray,cv2.COLOR_GRAY2RGB)
+        img_text=cv2.putText(cv2.resize(img_rgb.reshape(64, 64,3).astype(np.uint8), (320, 320)), str(
+            state), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        cv2.imshow('sensor', img_text)
+        cv2.waitKey(1)
         time.sleep(0.2)
 
 

@@ -5,7 +5,6 @@ class Bluez(object):
     def __init__(self):
         self.bd_addr = "20:17:04:24:78:09"
         self.port = 1
-        # self.sock=bluetooth.BluetoothSocket( bluetooth.RFCOMM )
         self.is_bluetooth_connected = False
 
     def connect(self,retry):

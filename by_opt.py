@@ -31,7 +31,7 @@ class ByOpt(object):
         for i in range(3):
             self.model.append(keras.models.load_model('{}.h5'.format(pre[i])))
         #byopt init
-        pbounds = {'length': (10, 17), 'st_point_a': (17,27),'st_point_m': (-13, -3),'delay_time': (0.001, 0.009)}
+        pbounds = {'length': (10, 25), 'st_point_a': (17,27),'st_point_m': (-13, -3),'delay_time': (0.005, 0.015)}
         self.optimizer = BayesianOptimization(
             f=self.black_box,
             pbounds=pbounds,
@@ -61,12 +61,12 @@ class ByOpt(object):
         q=Queue()
         th=threading.Thread(target=self.rb.keep_step,name='step_th',args=(delay_time,q))
         time.sleep(1)
-
         start_time=time.time()
         th.start() #start walk
+        q.put('start')
         while time.time()-start_time<5:
             time.sleep(0.3)
-        q.put(True)
+        q.put('end')
         self.rb.pause_simulation()
         time.sleep(0.4)
         position=self.rb.get_body_x_position()
@@ -79,7 +79,7 @@ class ByOpt(object):
 
 if __name__ == "__main__":
     tr=ByOpt()
-    tr.load_logs(['./byopt_logs/result.json'])
+    tr.load_logs(['./byopt_logs/logs_tmp.json'])
     tr.logger_init()
     tr.start_opt()
     tr.show_max()        
