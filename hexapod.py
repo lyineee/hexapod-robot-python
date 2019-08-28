@@ -84,7 +84,10 @@ class Hexapod(object):
         self.back_data = np.load('./data/NN_back_use.npy')
         self.middle_data = np.load('./data/NN_middle_use.npy')
         self.ahead_data = np.load('./data/NN_ahead_use.npy')
-        enumerate
+        
+        self.back_data_t = np.load('./test_b.npy')
+        self.middle_data_t = np.load('./test_m.npy')
+        self.ahead_data_t = np.load('./test_a.npy')
         # plt.plot(self.back_data[:,0],self.back_data[:,1:])
         # plt.show()
         # self.ahead_data=self.ahead_data[::-1]
@@ -194,14 +197,14 @@ class Hexapod(object):
             for i in range(total_step):
                 if i in [0,1,2] :
                     continue
-                hang=(-0.0044444*i**2+0.133333*i)*20
+                hang=(-0.0044444*index**2+0.133333*index)*10
                 # ahead
                 self.set_leg_position(0, self.ahead_data[i])
                 self.set_leg_position(2, self.back_data[i])
                 self.set_leg_position(4, self.middle_data[i])
 
                 # back
-                hang=-0.04444*(index**2)+1.3333*index
+                # hang=-0.04444*(index**2)+1.3333*index
                 self.set_leg_position(1, self.middle_data[total_step-i]+hang)
                 self.set_leg_position(3, self.ahead_data[total_step-i]+hang)
                 self.set_leg_position(5, self.back_data[total_step-i]+hang)
@@ -212,73 +215,43 @@ class Hexapod(object):
             for i in range(total_step):
                 if i in [0,1,2]:
                     continue
-                hang=(-0.0044444*i**2+0.133333*i)*20
+                hang=(-0.0044444*index**2+0.133333*index)*10
                 # ahead
                 self.set_leg_position(1, self.middle_data[i])
                 self.set_leg_position(3, self.ahead_data[i])
                 self.set_leg_position(5, self.back_data[i])
     
                 # back
-                hang=-0.04444*(index**2)+1.3333*index
+                # hang=-0.04444*(index**2)+1.3333*index
                 self.set_leg_position(0, self.ahead_data[total_step-i]+hang)
                 self.set_leg_position(2, self.back_data[total_step-i]+hang)
                 self.set_leg_position(4, self.middle_data[total_step-i]+hang)
                 time.sleep(time_0)
                 index+=1
 
-    def one_step_2(self, time_0,stage=-1):
-        total_step = self.ahead_data.shape[0]-1
-        hang = 10
-        full_flag=False
-        if stage==-1:
-            full_flag=True
-        index=0
-        
-        for i in range(total_step):
-            if i in [0,1,2] :
-                continue
-            hang=(-0.0044444*i**2+0.133333*i)*20
-            # ahead
-            self.set_leg_position(0, self.ahead_data[i])
-            self.set_leg_position(5, self.back_data[i])
-            # back
-            hang=-0.04444*(index**2)+1.3333*index
-            self.set_leg_position(1, self.middle_data[total_step-i]+hang)
-            self.set_leg_position(4, self.middle_data[total_step-i]+hang)
+    def one_step_2(self, time_0,delta_1=0,delta_2=0):
+        for i in range(60):
+            self.set_leg_position(0, self.ahead_data_t[i%60])
+            self.set_leg_position(5, self.back_data_t[i%60])
+
+            self.set_leg_position(1, self.middle_data_t[(i+delta_1)%60])
+            self.set_leg_position(4, self.middle_data_t[(i+delta_1)%60])
+
+            self.set_leg_position(2, self.back_data_t[(i+delta_1+delta_2)%60])
+            self.set_leg_position(3, self.ahead_data_t[(i+delta_1+delta_2)%60])
             time.sleep(time_0)
-            index+=1
 
-        index=0
-        for i in range(total_step):
-            if i in [0,1,2]:
-                continue
-            hang=(-0.0044444*i**2+0.133333*i)*20
-            # ahead
-            self.set_leg_position(1, self.middle_data[i])
-            self.set_leg_position(4, self.middle_data[i])
+    def one_step_3(self, time_0,delta_1=0,delta_2=0):
+        for i in range(60):
+            self.set_leg_position(0, self.ahead_data_t[i%60])
+            self.set_leg_position(2, self.back_data_t[i%60])
+            self.set_leg_position(4, self.middle_data_t[i%60])
 
-            # back
-            hang=-0.04444*(index**2)+1.3333*index
-            self.set_leg_position(2, self.back_data[total_step-i]+hang)
-            self.set_leg_position(3, self.ahead_data[total_step-i]+hang)
+            self.set_leg_position(1, self.middle_data_t[(i+delta_1)%60])
+            self.set_leg_position(3, self.ahead_data_t[(i+delta_1)%60])
+            self.set_leg_position(5, self.back_data_t[(i+delta_1)%60])
             time.sleep(time_0)
-            index+=1
 
-        index=0
-        for i in range(total_step):
-            if i in [0,1,2]:
-                continue
-            hang=(-0.0044444*i**2+0.133333*i)*20
-            # ahead
-            self.set_leg_position(2, self.back_data[i])
-            self.set_leg_position(3, self.ahead_data[i])
-
-            # back
-            hang=-0.04444*(index**2)+1.3333*index
-            self.set_leg_position(0, self.ahead_data[total_step-i]+hang)
-            self.set_leg_position(5, self.back_data[total_step-i]+hang)
-            time.sleep(time_0)
-            index+=1
 
     def turn_right(self, right_range,stage=-1,time_0 = 0.005):
         total_step = self.ahead_data.shape[0]-1
@@ -494,8 +467,9 @@ def main():
         # rb.one_step(0.003)
         # good 
         # rb.one_step_t(0.015)
-        rb.one_step_t(0.008)
-        # rb.one_step_2(0.007)
+        rb.one_step_t(0.010)
+        # rb.one_step_2(0.012,20,20)
+        # rb.one_step_3(0.012,30,20)
         # rb.one_step(0.005)
         # rb.one_step_t(0.1)
         rb.show_speed()
