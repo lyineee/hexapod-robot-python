@@ -33,6 +33,13 @@ see [notice](./NOTICE.md)
 
 None
 
+### 没用的文件(夹)
+
+tet.py
+./deprecated/
+./map/
+./logs/
+
 ## 训练过程
 
 1. 使用[sample_image.py](./sample-data.py)采集数据-数据为`.npy`格式
@@ -71,15 +78,20 @@ None
     graph('middle')
     graph('ahead')
     ```
+
 3. 检查弹出的图片中图形的拟合情况,例如
-    ![例子](./readme_image/Figure_b.png)
+    ![a](./readme_image/Figure_b.png)
 
-### 没用的文件(夹)
+>因为仿真使用的数据是`.npy`文件,所以这时候仿真所用的数据就是新生成的数据了
 
-tet.py
-./deprecated/
-./map/
-./logs/
+4. 更改[regresion.py](./regression.py)中将`if __name__ == "__main__":`内的程序更改为`generate_use_data_t([[范围1],[范围2],[范围3]],采样率)`,然后程序会在`hexapod`文件夹内生成`arduino.txt`
+
+>这个`范围1`是一个列表`[下限,上限]`,例如`[-15,15]`
+>
+>这个范围就是上图中`x轴`的范围,也就是`vrep`中`tip`的坐标
+>
+>采样率是生成数组的长度,一般填`30`就可以了
+
 ___
 
 ## 下面的似乎没什么用了
