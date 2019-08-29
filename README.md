@@ -33,6 +33,47 @@ see [notice](./NOTICE.md)
 
 None
 
+## 训练过程
+
+1. 使用[sample_image.py](./sample-data.py)采集数据-数据为`.npy`格式
+2. 更改[regresion.py](./regression.py)中将`if __name__ == "__main__":`内的程序更改如下
+
+    ```python
+    label = np.load('./data/label_ahead.npy')
+    data = np.load('./data/data_ahead.npy')
+    model=model_2()
+    label = label.reshape(label.shape[0], 1)
+    history = model.fit(
+        label, data, epochs=150, batch_size=8, validation_split=0.05)
+    model.save('./data/NN_ahead.h5')
+    graph('ahead')
+
+    label = np.load('./data/label_middle.npy')
+    data = np.load('./data/data_middle.npy')
+    model=model_2()
+    label = label.reshape(label.shape[0], 1)
+    history = model.fit(
+        label, data, epochs=100, batch_size=8, validation_split=0.1)
+    model.save('./data/NN_middle.h5')
+    graph('middle')
+
+    label = np.load('./data/label_back.npy')
+    data = np.load('./data/data_back.npy')
+    model=model_2()
+    label = label.reshape(label.shape[0], 1)
+    history = model.fit(
+        label, data, epochs=150, batch_size=8, validation_split=0.05)
+    model.save('./data/NN_back.h5')
+    graph('back')
+
+    #检查训练的模型准确率
+    graph('back')
+    graph('middle')
+    graph('ahead')
+    ```
+3. 检查弹出的图片中图形的拟合情况,例如
+    ![例子](./readme_image/Figure_b.png)
+
 ### 没用的文件(夹)
 
 tet.py
