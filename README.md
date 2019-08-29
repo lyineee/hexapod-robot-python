@@ -42,7 +42,7 @@ tet.py
 
 ## 训练过程
 
-1. 使用[sample_image.py](./sample-data.py)采集数据-数据为`.npy`格式
+1. 使用[sample-data.py](./sample-data.py)采集数据-数据为`.npy`格式
 2. 更改[regresion.py](./regression.py)中将`if __name__ == "__main__":`内的程序更改如下
 
     ```python
@@ -93,6 +93,7 @@ tet.py
 >采样率是生成数组的长度,一般填`30`就可以了
 
 5. 将[arduino.txt](./arduino.txt)中的数据复制到`control.ino`就可以了
+
 >生成的`arduino.txt`共有六行分别对应
 >
 >```c++
@@ -104,6 +105,7 @@ tet.py
 >const PROGMEM uint16_t  straight_middle_left[30][3] = 
 >const PROGMEM uint16_t    straight_back_left[30][3] = 
 >```
+>
 >这六行,将他们分别复制到这六行的后面就可以了,注意格式`arduino.txt`中每行数组末尾格式是不对的,记得改
 
 ___
