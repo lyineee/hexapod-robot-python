@@ -2,6 +2,49 @@
 
 see [notice](./NOTICE.md)
 
+## 文件结构
+
+### 有用的文件
+
+#### python
+
+[hexapod.py](./hexapod.py) - vrep机器人仿真控制类
+
+[by_opt.py](.by_opt.py) - 贝叶斯优化程序
+
+[control.py](./control.py) - 主控制程序,跑真赛道的时候用
+
+[bluetooth_control.py](./bluetooth_control.py) - 蓝牙信息发送类
+
+[image_train.py](./image_train.py) 包括:
+
+1. 循迹神经网络训练程序
+
+    ```python
+    train = ImageTrain()
+    train.train(data=data,label=label) # data为数据 label为标签
+    ```
+
+2. vrep仿真,使用`test_robot()`这行代码来在vrep中仿真.(不要改`'turn_straight_cla_v0.2.h5'`这个)
+
+[image_label.py](./image_label.py) - 用于标记图片
+
+#### arduino
+
+None
+
+### 没用的文件(夹)
+
+tet.py
+./deprecated/
+./map/
+./logs/
+___
+
+## 下面的似乎没什么用了
+
+___
+
 ## 运行 image-capture 采集数据
 
 ### 更改转弯角度
