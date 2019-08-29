@@ -92,6 +92,20 @@ tet.py
 >
 >采样率是生成数组的长度,一般填`30`就可以了
 
+5. 将[arduino.txt](./arduino.txt)中的数据复制到`control.ino`就可以了
+>生成的`arduino.txt`共有六行分别对应
+>
+>```c++
+>//data begin
+>const PROGMEM uint16_t  straight_ahead_right[30][3] = 
+>const PROGMEM uint16_t straight_middle_right[30][3] = 
+>const PROGMEM uint16_t   straight_back_right[30][3] = 
+>const PROGMEM uint16_t   straight_ahead_left[30][3] = 
+>const PROGMEM uint16_t  straight_middle_left[30][3] = 
+>const PROGMEM uint16_t    straight_back_left[30][3] = 
+>```
+>这六行,将他们分别复制到这六行的后面就可以了,注意格式`arduino.txt`中每行数组末尾格式是不对的,记得改
+
 ___
 
 ## 下面的似乎没什么用了
