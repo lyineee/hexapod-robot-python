@@ -5,7 +5,7 @@ import time
 import numpy as np
 from matplotlib import pyplot as plt
 from math import sqrt
-
+from utils.vrep_util import connect
 import vrep
 from regression import generate_use_data
 
@@ -97,9 +97,9 @@ class Hexapod(object):
         self.init()
 
     def set_step_data(self, data):
-        self.back_data = data[0]
-        self.middle_data = data[1]
-        self.ahead_data = data[2]
+        self.back_data = np.array(data[0])
+        self.middle_data = np.array(data[1])
+        self.ahead_data = np.array(data[2])
 
     def step(self, time_0, time_limit):
         self.get_body_x_position()
@@ -141,12 +141,13 @@ class Hexapod(object):
                 time.sleep(time_0)
 
     def keep_step(self,time_0,q):
-        self.step_init()
+        # self.step_init()
+        # self.init()
         #wait for start
         q.get()
         while True:
             try:
-                self.one_step(time_0)
+                self.one_step_t(time_0)
                 if not q.empty():
                     break
             except:
@@ -186,46 +187,51 @@ class Hexapod(object):
                 time.sleep(time_0)
 
     def one_step_t(self, time_0,stage=-1):
-        total_step = self.ahead_data.shape[0]-1
-        hang = 10
+        total_step = self.ahead_data.shape[0]
+        hang = 20
         full_flag=False
         if stage==-1:
             full_flag=True
         index=0
+        l=total_step-1
         
         if stage==1 or full_flag:
             for i in range(total_step):
-                if i in [0,1,2] :
+                # if i in [0,1,2] :
+                #     continue
+                if i in [0]:
                     continue
-                hang=(-0.0044444*index**2+0.133333*index)*10
+                hang=(-(4/l**2)*i**2+(4/l)*i)*10
                 # ahead
                 self.set_leg_position(0, self.ahead_data[i])
                 self.set_leg_position(2, self.back_data[i])
                 self.set_leg_position(4, self.middle_data[i])
 
-                # back
+                # back hang up
                 # hang=-0.04444*(index**2)+1.3333*index
-                self.set_leg_position(1, self.middle_data[total_step-i]+hang)
-                self.set_leg_position(3, self.ahead_data[total_step-i]+hang)
-                self.set_leg_position(5, self.back_data[total_step-i]+hang)
+                self.set_leg_position(1, self.middle_data[total_step-i-1]+hang)
+                self.set_leg_position(3, self.ahead_data[total_step-i-1]+hang)
+                self.set_leg_position(5, self.back_data[total_step-i-1]+hang)
                 time.sleep(time_0)
                 index+=1
         index=0
         if stage==2 or full_flag:
             for i in range(total_step):
-                if i in [0,1,2]:
+                # if i in [0,1,2]:
+                #     continue
+                if i in [0]:
                     continue
-                hang=(-0.0044444*index**2+0.133333*index)*10
+                hang=(-(4/l**2)*i**2+(4/l)*i)*10
                 # ahead
                 self.set_leg_position(1, self.middle_data[i])
                 self.set_leg_position(3, self.ahead_data[i])
                 self.set_leg_position(5, self.back_data[i])
     
-                # back
+                # back hang up
                 # hang=-0.04444*(index**2)+1.3333*index
-                self.set_leg_position(0, self.ahead_data[total_step-i]+hang)
-                self.set_leg_position(2, self.back_data[total_step-i]+hang)
-                self.set_leg_position(4, self.middle_data[total_step-i]+hang)
+                self.set_leg_position(0, self.ahead_data[total_step-i-1]+hang)
+                self.set_leg_position(2, self.back_data[total_step-i-1]+hang)
+                self.set_leg_position(4, self.middle_data[total_step-i-1]+hang)
                 time.sleep(time_0)
                 index+=1
 
@@ -436,20 +442,20 @@ def map(input_num, input_range, output_range):
     return result
 
 
-def connect(retry):
-    vrep.simxFinish(-1)  # 关掉之前的连接
-    while True:
-        clientId = vrep.simxStart(
-            "127.0.0.1", 19997, True, True, 100, 5)  # 建立和服务器的连接
-        if clientId != -1:  # 连接成功
-            print('connect successfully')
-            return clientId
-        elif retry > 0:
-            retry -= 1
-        else:
-            print('connect time out')
-            sys.exit(1)
-        time.sleep(1)
+# def connect(retry):
+#     vrep.simxFinish(-1)  # 关掉之前的连接
+#     while True:
+#         clientId = vrep.simxStart(
+#             "127.0.0.1", 19997, True, True, 100, 5)  # 建立和服务器的连接
+#         if clientId != -1:  # 连接成功
+#             print('connect successfully')
+#             return clientId
+#         elif retry > 0:
+#             retry -= 1
+#         else:
+#             print('connect time out')
+#             sys.exit(1)
+#         time.sleep(1)
 
 
 def main():
@@ -467,7 +473,7 @@ def main():
         # rb.one_step(0.003)
         # good 
         # rb.one_step_t(0.015)
-        rb.one_step_t(0.010)
+        rb.one_step_t(0.009)
         # rb.one_step_2(0.012,20,20)
         # rb.one_step_3(0.012,30,20)
         # rb.one_step(0.005)

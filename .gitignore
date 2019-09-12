@@ -6,3 +6,5 @@ archive/
 map/
 gen_image/
 .ipynb_checkpoints/
+/byopt_logs/
+/utils/__pycache__/
