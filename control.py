@@ -13,7 +13,7 @@ class RobotControl(object):
         # self.cap = cv2.VideoCapture(1)
         self.bz = Bluez()
         # load model
-        self.line_tracker_model = keras.models.load_model('./result_v1.0.h5')
+        self.line_tracker_model = keras.models.load_model('./result_v1.1.h5')
         self.sa_det_mode = keras.models.load_model(
             './turn_straight_cla_v0.2.h5')
 
@@ -51,7 +51,8 @@ class RobotControl(object):
             self.state = state
 
             if show_window:
-                img_rgb=cv2.cvtColor(img_resize,cv2.COLOR_GRAY2RGB)
+                # img_rgb=cv2.cvtColor(img_resize,cv2.COLOR_GRAY2RGB)
+                img_rgb=img_resize
                 img_num = cv2.putText(cv2.resize(
                     cv2.threshold(img_rgb, 30, 255, cv2.THRESH_BINARY)[1].astype(np.uint8),(320, 320)), str(self.state), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
                 cv2.imshow('sensor',img_num )
@@ -61,10 +62,10 @@ class RobotControl(object):
         while True:
             self.get_state(show_window=True)
             print(self.state, end='\r')
-            try:
-                self.bz.send(self.state)
-            except:
-                self.bluetooth_connect()
+            # try:
+            #     self.bz.send(self.state)
+            # except:
+            #     self.bluetooth_connect()
                 
 
 

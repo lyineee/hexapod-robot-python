@@ -231,9 +231,9 @@ if __name__ == "__main__":
     # a = {"delay_time": 0.003623675222260717, "length": 1,
     #      "st_point_a": 20.35957752716881, "st_point_m": -6.258786473403007}  # TODO fro turn 
     # a={'delay_time': 0.0038839442858743124,'length': 15.02214366569923,'st_point_a': 21.483755179408615,'st_point_m': -6.159917245448711}
-    a={"delay_time": 0.013257107652327172, "length": 24.115631457710805, "st_point_a": 26.187273919059535, "st_point_m": -12.171231015717657} #TODO fastest   4.88s/1.6m
+    # a={"delay_time": 0.013257107652327172, "length": 24.115631457710805, "st_point_a": 26.187273919059535, "st_point_m": -12.171231015717657} #TODO fastest   4.88s/1.6m
     # a={'delay_time': 0.010778506064900967,'length': 23.39719477061695,'st_point_a': 25.870626368447393,'st_point_m': -12.080083913592235}
-    generate_use_data_t([[a['st_point_a'], a['st_point_a']-a['length']], [a['st_point_m'] +a['length'], a['st_point_m']], [-1*a['st_point_a']+a['length'], -1*a['st_point_a']]], 30)
+    # generate_use_data_t([[a['st_point_a'], a['st_point_a']-a['length']], [a['st_point_m'] +a['length'], a['st_point_m']], [-1*a['st_point_a']+a['length'], -1*a['st_point_a']]], 30)
     # gen_data_for_arduino()
     # gen_test()
     pass
