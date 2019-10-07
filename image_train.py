@@ -250,25 +250,27 @@ def test_robot(model_name='result.h5'):
             lock.release()
 
         if state_t == 0:
-            rb.one_step(0.005, stage)
+            rb.one_step_t(0.013, stage)
         # left
         if state_t == 1:
-            rb.turn_left([10, 28], stage)
+            rb.turn_left([10, 28], stage,time_0=0.013)
         elif state_t == 2:
             # rb.turn_left([20, 39],stage)
-            rb.turn_left([10, 23], stage)
+            rb.turn_left([10, 23], stage,time_0=0.013)
         elif state_t == 3:
             # rb.turn_left([20, 25],stage)
-            rb.turn_left([10, 16], stage)
+            # rb.turn_left([10, 16], stage,time_0=0.013)
+            rb.turn_left([10, 13], stage,time_0=0.013)
         # right
         elif state_t == 4:
-            rb.turn_right([10, 28], stage)
+            rb.turn_right([10, 28], stage,time_0=0.013)
         elif state_t == 5:
             # rb.turn_right([20, 39],stage)
-            rb.turn_right([10, 23], stage)
+            rb.turn_right([10, 23], stage,time_0=0.013)
         elif state_t == 6:
             # rb.turn_right([20, 25],stage)
-            rb.turn_right([10, 16], stage)
+            # rb.turn_right([10, 16], stage,time_0=0.013)
+            rb.turn_right([10, 13], stage,time_0=0.013)
 
         if stage == 1:
             stage = 2
@@ -304,12 +306,14 @@ def control(img):
 def refresh_state(cap, model_name):
     global state, lock
     model_1 = keras.models.load_model(model_name)
-    model = keras.models.load_model('./result.h5')
+    model = keras.models.load_model('./result_v1.1.h5')
     cv2.namedWindow('sensor')
     while True:
         lock.acquire()
         try:
             img = cap.get_image()
+        except:
+            continue
         finally:
             lock.release()
         # ret,img = cap.read()
@@ -395,3 +399,5 @@ if __name__ == "__main__":
 # 2300
 # 2300
 # 2300
+
+#50s 

@@ -85,9 +85,6 @@ class Hexapod(object):
         self.middle_data = np.load('./data/NN_middle_use.npy')
         self.ahead_data = np.load('./data/NN_ahead_use.npy')
         
-        self.back_data_t = np.load('./test_b.npy')
-        self.middle_data_t = np.load('./test_m.npy')
-        self.ahead_data_t = np.load('./test_a.npy')
         # plt.plot(self.back_data[:,0],self.back_data[:,1:])
         # plt.show()
         # self.ahead_data=self.ahead_data[::-1]
@@ -96,10 +93,14 @@ class Hexapod(object):
         # init robot
         self.init()
 
-    def set_step_data(self, data):
+    def set_step_data(self, data,data_turn):
         self.back_data = np.array(data[0])
         self.middle_data = np.array(data[1])
         self.ahead_data = np.array(data[2])
+
+        self.back_turn_data = np.array(data_turn[0])
+        self.middle_turn_data = np.array(data_turn[1])
+        self.ahead_turn_data = np.array(data_turn[2])
 
     def step(self, time_0, time_limit):
         self.get_body_x_position()
@@ -263,12 +264,15 @@ class Hexapod(object):
         total_step = self.ahead_data.shape[0]-1
         turn_step = max(right_range)-min(right_range)
         hang = 10
+        hang_hight = 10
         full_flag=False
         if stage==-1:
             full_flag=True
+        l=total_step-1
 
         if stage==1 or full_flag:
             for i in range(total_step):
+                hang=(-(4/l**2)*i**2+(4/l)*i)*hang_hight
                 # ahead
                 self.set_leg_position(0, self.ahead_data[i])
                 self.set_leg_position(1, self.middle_data[total_step-i]+hang)
@@ -286,6 +290,7 @@ class Hexapod(object):
 
         if stage==2 or full_flag:
             for i in range(total_step):
+                hang=(-(4/l**2)*i**2+(4/l)*i)*hang_hight
                 # ahead
                 if i < turn_step:
                     self.set_leg_position(
@@ -305,12 +310,15 @@ class Hexapod(object):
         total_step = self.ahead_data.shape[0]-1
         turn_step = max(left_range)-min(left_range)
         hang = 10
+        hang_hight=10
         full_flag=False
         if stage==-1:
             full_flag=True
+        l=total_step-1
 
         if stage == 1 or full_flag:
             for i in range(total_step):
+                hang=(-(4/l**2)*i**2+(4/l)*i)*hang_hight
                 if i < turn_step:
                     self.set_leg_position(
                         0, self.ahead_data[left_range[0]:left_range[1]][i])
@@ -327,6 +335,7 @@ class Hexapod(object):
 
         if stage == 2 or full_flag:
             for i in range(total_step):
+                hang=(-(4/l**2)*i**2+(4/l)*i)*hang_hight
                 # ahead
                 self.set_leg_position(3, self.ahead_data[i])
                 self.set_leg_position(4, self.middle_data[total_step-i]+hang)
@@ -473,7 +482,7 @@ def main():
         # rb.one_step(0.003)
         # good 
         # rb.one_step_t(0.015)
-        rb.one_step_t(0.009)
+        rb.one_step_t(0.005)
         # rb.one_step_2(0.012,20,20)
         # rb.one_step_3(0.012,30,20)
         # rb.one_step(0.005)

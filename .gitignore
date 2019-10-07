@@ -8,3 +8,4 @@ gen_image/
 .ipynb_checkpoints/
 /byopt_logs/
 /utils/__pycache__/
+*.pyc
