@@ -3,7 +3,8 @@ import time
 
 class Bluez(object):
     def __init__(self):
-        self.bd_addr = "20:17:04:24:78:09"
+        # self.bd_addr = "20:17:04:24:78:09"
+        self.bd_addr = "20:19:04:10:01:73"
         self.port = 1
         self.is_bluetooth_connected = False
 

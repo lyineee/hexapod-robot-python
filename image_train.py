@@ -2,6 +2,7 @@
 import os
 import threading
 import time
+from queue import Queue
 
 import cv2
 import numpy as np
@@ -224,14 +225,15 @@ class ImageTrain(object):
         return label, data
 
 
-def test_robot(model_name='result.h5'):
-    client_id = connect(10)
-    rb = Hexapod(client_id)
+def test_robot(model_name='result.h5',rb=None):
+    # global START_FLAG
+    if rb is None:
+        client_id = connect(10)
+        rb = Hexapod(client_id)
     # model = keras.models.load_model('result.h5')
-
-    vrep.simxStartSimulation(client_id, vrep.simx_opmode_blocking)
+    rb.start_simulation()
     time.sleep(1)
-    rb.step_init()
+    # rb.step_init()
 
     # creat thread
     global state, lock
@@ -256,21 +258,28 @@ def test_robot(model_name='result.h5'):
             rb.turn_left([10, 28], stage,time_0=0.013)
         elif state_t == 2:
             # rb.turn_left([20, 39],stage)
-            rb.turn_left([10, 23], stage,time_0=0.013)
+            # rb.turn_left([10, 23], stage,time_0=0.013)
+            rb.left()
+
         elif state_t == 3:
             # rb.turn_left([20, 25],stage)
             # rb.turn_left([10, 16], stage,time_0=0.013)
-            rb.turn_left([10, 13], stage,time_0=0.013)
+            # rb.turn_left([10, 13], stage,time_0=0.013)
+            rb.left()
+
         # right
         elif state_t == 4:
             rb.turn_right([10, 28], stage,time_0=0.013)
         elif state_t == 5:
             # rb.turn_right([20, 39],stage)
-            rb.turn_right([10, 23], stage,time_0=0.013)
+            # rb.turn_right([10, 23], stage,time_0=0.013)
+            rb.right()
         elif state_t == 6:
             # rb.turn_right([20, 25],stage)
             # rb.turn_right([10, 16], stage,time_0=0.013)
-            rb.turn_right([10, 13], stage,time_0=0.013)
+            # rb.turn_right([10, 13], stage,time_0=0.013)
+            rb.right()
+
 
         if stage == 1:
             stage = 2
@@ -281,7 +290,13 @@ def test_robot(model_name='result.h5'):
         print('state:{}'.format(state), 'step_time_use:{}'.format(
             str(time.time()-time_s)), end='\r')
         # print('step_time_use:{}'.format(str(time.time()-)),end='\r')
+        if rb.get_body_x_position()**2+rb.get_body_y_position()**2<0.0625:
+            # START_FLAG=1
+            #TODO there should have something 
+            return
 
+        
+lock=threading.Lock()
 
 def control(img):
     # step one
@@ -303,20 +318,25 @@ def control(img):
     return result
 
 
-def refresh_state(cap, model_name):
+def refresh_state(cap, model_name,q=None):
     global state, lock
     model_1 = keras.models.load_model(model_name)
     model = keras.models.load_model('./result_v1.1.h5')
     cv2.namedWindow('sensor')
+    if q is not None:
+        q.put('init_complete')
     while True:
-        lock.acquire()
-        try:
-            img = cap.get_image()
-        except:
-            continue
-        finally:
-            lock.release()
+        img = cap.get_image()
+
+        # lock.acquire()
+        # try:
+        #     img = cap.get_image()
+        # except:
+        #     continue
+        # finally:
+        #     lock.release()
         # ret,img = cap.read()
+
         img_resize = cv2.resize(img, (64, 64))
         # img_resize=np.rot90(img_resize)
         img_gray = cv2.cvtColor(img_resize, cv2.COLOR_RGB2GRAY)
@@ -338,15 +358,15 @@ def refresh_state(cap, model_name):
         result = 0
         float_data = img_gray.reshape(1, 64, 64, 1)
         data = float_data.astype(np.uint8)
-        if np.argmax(model_1.predict(data)) == 1:
-            result = np.argmax(model.predict(data))
-        else:
-            result = 0
+        # if np.argmax(model_1.predict(data)) == 1:
+        #     result = np.argmax(model.predict(data))
+        # else:
+        #     result = 0
 
+        result = np.argmax(model.predict(data))
         # result=control(img_gray)
 
         lock.acquire()
-
         try:
             state = result
         finally:
@@ -358,6 +378,51 @@ def refresh_state(cap, model_name):
         cv2.imshow('sensor', img_text)
         cv2.waitKey(1)
         time.sleep(0.2)
+
+def test_method(rb):
+    global state, lock
+    rb.start_simulation()
+    time.sleep(1)
+    state = 0
+    # lock = threading.Lock()
+    # q=Queue()
+    # cap_th = threading.Thread(target=refresh_state, args=(rb, 'result.h5',q))
+    # cap_th.start()
+    stage = 1
+    #wait model to init
+    time_start=time.time()
+
+    while True:
+        time_s = time.time()
+        lock.acquire()
+        try:
+            state_t = state
+        finally:
+            lock.release()
+        if state_t == 0:
+            rb.one_step_t(0.013, stage)
+        # left
+        if state_t == 1:
+            rb.turn_left([10, 28], stage,time_0=0.013)
+        elif state_t == 2:
+            rb.left()
+        elif state_t == 3:
+            rb.left()
+        # right
+        elif state_t == 4:
+            rb.turn_right([10, 28], stage,time_0=0.013)
+        elif state_t == 5:
+            rb.right()
+        elif state_t == 6:
+            rb.right()
+        if stage == 1:
+            stage = 2
+        else:
+            stage = 1
+        if time.time()-time_start>15:
+            return 30
+        if rb.get_body_x_position()**2+rb.get_body_y_position()**2<0.0625:
+            return time.time()-time_start
 
 
 def train_set_percentage(label=None):

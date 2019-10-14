@@ -6,6 +6,7 @@ from bayes_opt.util import load_logs
 from utils.vrep_util import connect
 from hexapod import Hexapod
 from regression import generate_use_data_t
+from image_train import refresh_state,test_method
 
 import time
 
@@ -19,6 +20,7 @@ import numpy as np
 
 class ByOpt(object):
     test=0
+    count=1
     def __init__(self, ifNN=True):
         # val init
         self.log_dir = ''
@@ -46,14 +48,22 @@ class ByOpt(object):
                    'ah_0_s': (-45, 30), 'ah_0_e': (-30, 45), 'ah_1_s': (-20, 45), 'ah_1_e': (-20, 45), 'ah_2_s': (10, -80), 'ah_2_e': (10, -80),
                    'delay': (0.130, 0.210)}
         pbounds_5={'ahead_1_a':(-1,1),'ahead_2_a':(-1,1),'ahead_3_a':(-1,1),'ahead_1_b':(-1,1),'ahead_2_b':(-1,1),'ahead_3_b':(-1,1),'middle_1_a':(-1,1),'middle_2_a':(-1,1),'middle_3_a':(-1,1),'middle_1_b':(-1,1),'middle_2_b':(-1,1),'middle_3_b':(-1,1),'delay':(0.02,0.09)}
+        # pbounds_6={'ahead_a':(0.45,0.65),'ahead_b':(,1),'middle_a':(-1,1),'middle_b':(-1,1)}
         # pbounds_6={'ahead_a':(-1,1),'ahead_b':(-1,1),'middle_a':(-1,1),'middle_b':(-1,1)}
-        pbounds_6={'ahead_a':(-1,1),'ahead_b':(-1,1),'middle_a':(-1,1),'middle_b':(-1,1),'delay':(0.025,0.3)}
+        pbounds_6={'ahead_a':(0.63,0.45),'ahead_b':(-0.95,-0.74),'middle_a':(0.45,0.76),'middle_b':(-0.4,-0.2),'delay':(0.025,0.035)}
+        pbounds_7={'ahead_a':(-1,-0.9),'ahead_b':(0.35,0.55),'middle_a':(-0.7,-0.6),'middle_b':(-0.03,0.2)}
+
         self.optimizer = BayesianOptimization(
             # f=self.black_box,
-            f=self.black_box_6,
+            f=self.black_box_7,
             pbounds=pbounds_6,
             verbose=2,
             random_state=1,)
+
+        # self.q=Queue()
+        # self.cap_th = threading.Thread(target=refresh_state, args=(self.rb, 'result.h5',self.q))
+        # self.cap_th.start()
+        # self.q.get()
 
     def logger_init(self, log_dir="./byopt_logs/logs.json"):
         logger = JSONLogger(path=log_dir)
@@ -291,7 +301,98 @@ class ByOpt(object):
             position = 0
         return position
 
-    def test(self, data_opt,black_box_func):
+
+    def black_box_7(self,ahead_a,ahead_b,middle_a,middle_b,delay):
+        #ahead_data
+        # delay=0.02573650763940472
+        ahead_leg_a=np.array([0.5446098736046021,-0.9474735404250036,0.2553768404632672])
+        ahead_leg_b=np.array([-0.835653908906631,0.39316038539104503,-0.38129175361998874])
+
+        middle_leg_a=np.array([ 0.665468853686944,-0.707220332164328,0.03495425595681743])
+        middle_leg_b=np.array([ -0.4075119658229989,-0.025838715404019164,0.15507920849877677])
+
+        ahead_leg=ahead_leg_a*np.sin(np.linspace(0,np.pi/2,5).reshape(5,1))+ahead_leg_b*np.cos(np.linspace(0,np.pi/2,5).reshape(5,1))
+        middle_leg=middle_leg_a*np.sin(np.linspace(0,np.pi/2,5).reshape(5,1))+middle_leg_b*np.cos(np.linspace(0,np.pi/2,5).reshape(5,1))
+
+        ah_data = np.stack(ahead_leg)*60
+        mi_data = np.stack(middle_leg)*60
+
+        # self.rb.set_step_data([ah_data, mi_data, ah_data])
+
+        #turn data
+        # delay=0.04866337735403608
+        ahead_turn_leg_a=np.array([0,-0.9474735404250036,0.2553768404632672])
+        ahead_turn_leg_b=np.array([0,0.39316038539104503,-0.38129175361998874])
+
+        middle_turn_leg_a=np.array([ 0,-0.707220332164328,0.03495425595681743])
+        middle_turn_leg_b=np.array([ 0,-0.025838715404019164,0.15507920849877677])
+
+        # ahead_turn_leg_a=np.array([ahead_a,0,0])
+        # ahead_turn_leg_b=np.array([ahead_b,0,0])
+
+        # middle_turn_leg_a=np.array([middle_a,0,0])
+        # middle_turn_leg_b=np.array([middle_b,0,0])
+
+        ahead_turn_leg=ahead_turn_leg_a*np.sin(np.linspace(0,np.pi/2,5).reshape(5,1))+ahead_turn_leg_b*np.cos(np.linspace(0,np.pi/2,5).reshape(5,1))
+        middle_turn_leg=middle_turn_leg_a*np.sin(np.linspace(0,np.pi/2,5).reshape(5,1))+middle_turn_leg_b*np.cos(np.linspace(0,np.pi/2,5).reshape(5,1))
+
+        ah_turn_data = np.stack(ahead_turn_leg)*60
+        mi_turn_data = np.stack(middle_turn_leg)*60
+
+        ah_turn_data[:,0]=np.linspace(-3,3,5)
+        mi_turn_data[:,0]=np.linspace(-3,3,5)
+        #TODO ok
+
+        self.rb.set_step_data([ah_data, mi_data, ah_data],[ah_turn_data, mi_turn_data, ah_turn_data],delay)
+
+        self.rb.start_simulation()
+        q = Queue()
+        th = threading.Thread(target=self.rb.keep_step,
+                              name='step_th', args=(delay, q,self.rb.right))
+        # time.sleep(1)
+        # use_time=test_method(self.rb)
+
+        # on_the_air_data=[]
+        time_start=time.time()
+        th.start()
+        q.put('start')
+        if self.test==1:
+            while True:
+                time.sleep(0.3)
+                self.rb.show_speed()
+        while time.time()-time_start < 6:
+            time.sleep(0.3)
+            # on_the_air_data.append([self.rb.get_body_x_position(),self.rb.get_body_y_position()])
+        q.put('end')
+
+        self.rb.pause_simulation()
+
+        # on_the_air_data=np.array(on_the_air_data)
+        # on_the_air_result=(np.sqrt(on_the_air_data[:,1]**2+(on_the_air_data[:,0]-1.875)**2)-1.875)**2 #Standard Deviation 
+        # std=(-1)*np.std(on_the_air_result,ddof=1) #reverse the std
+
+        time.sleep(0.4)
+        x=self.rb.get_body_x_position()
+        y=(-1)*self.rb.get_body_y_position()
+        self.rb.stop_simulation()
+        if y<0:
+            return -2
+        arg1=(-1)*(x-math.sqrt(1.875**2-(y-1.875)**2))**2
+
+        # deg=np.degrees(np.arctan(x/(y-1.875)))
+        # # if x>0 and y-1.875<0:
+        # #     deg=180+deg
+        # # arg1=(deg/180)*10
+        # length_data=on_the_air_data
+        # length_data[1:]=on_the_air_data[1:]-on_the_air_data[:-1]
+        # length=sum(np.sqrt(length_data[:,0]**2+length_data[:,1]**2))
+        # speed=length/6
+        result=3*arg1+y
+        print('{}: {}'.format(self.count,result))
+        self.count+=1
+        return result
+        
+    def test_data(self,data_opt,black_box_func):
         # load the data
         # ah_data = np.array([[data['ah_0_s'], data['ah_1_s'], data['ah_2_s']], [
         #                    (data['ah_0_e']+data['ah_0_s'])/2, data['ah_1_m'], data['ah_2_m']], [data['ah_0_e'], data['ah_1_e'], data['ah_2_e']]])
@@ -316,6 +417,7 @@ class ByOpt(object):
         #     self.rb.show_speed()
         self.test=1
         black_box_func(**data_opt)
+        self.test=0
 
 
 if __name__ == "__main__":
@@ -341,15 +443,33 @@ if __name__ == "__main__":
     data_7={'ahead_1_a': 0.5446098736046021, 'ahead_1_b': -0.835653908906631, 'delay': 0.03573650763940472, 'middle_1_a': 0.665468853686944, 'middle_1_b': -0.4075119658229989}
     data_7={'ahead_a': 0.5446098736046021, 'ahead_b': -0.835653908906631, 'delay': 0.03573650763940472, 'middle_a': 0.665468853686944, 'middle_b': -0.4075119658229989}
 
-    tr.test(data_7,tr.black_box_6)
+    # tr.test(data_7,tr.black_box_6)
+    #black_box_7 
+    data_8={'ahead_a': 0.7973475208988559, 'ahead_b': -0.9925179072490438, 'delay': 0.04676828436230832, 'middle_a': 0.7606830742221407, 'middle_b': -0.3833777503252276}
+    data_9 = {'ahead_a': 0.7855599514433688, 
+              'ahead_b': -1.0,
+            #   'delay': 0.04866337735403608,
+              'middle_a': 0.7379049669844442,
+              'middle_b': -0.36132918484862947}#use this data data[-2] this is leg_0 data
+    data_10 = {'ahead_a': 0.8139253072428453,
+               'ahead_b': -0.9630527989237955,
+               'delay': 0.04795460569137124,
+               'middle_a': 0.7961344428871164,
+               'middle_b': -0.3961634973231694}
+
+    #new one 
+    data_11 ={'ahead_a': 0.63,                                                                                'ahead_b': -0.8667278955654526,
+  'delay': 0.03356217420325619,
+  'middle_a': 0.6123380307461854,
+  'middle_b': -0.26129529963319836}
 
 
-    # tr.test(data_1)
+
+    tr.test_data(data_11,tr.black_box_7)
     # tr.load_logs(['./byopt_logs/logs_tmp.json'])
     # tr.logger_init()
-    # print("New optimizer is now aware of {} points.".format(len(tr.optimizer.space)))
-    # tr.start_opt(100,15)
-    # tr.start_opt(450,80)
+    # tr.start_opt(100,30)
+    # # tr.start_opt(450,80)
     # tr.show_max()
 
 #挑一部分参数出来多次优化？减少优化参数的个数

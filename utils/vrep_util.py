@@ -1,4 +1,6 @@
 import vrep
+import time
+import sys
 
 
 def connect(retry):

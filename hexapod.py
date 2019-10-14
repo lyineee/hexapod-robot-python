@@ -9,10 +9,13 @@ from utils.vrep_util import connect
 import vrep
 from regression import generate_use_data
 
+import threading
+
 # from tensorflow import keras
 
 
 class Hexapod(object):
+    lock=threading.Lock()
 
     def __init__(self, client_id):
         self.client_id = client_id
@@ -41,14 +44,8 @@ class Hexapod(object):
         if status != 0:
             raise Exception("init error when get handle")
 
-        self.left_0 = 0
-        self.left_1 = 1
-        self.left_2 = 2
-        self.right_0 = 3
-        self.right_1 = 4
-        self.right_2 = 5
-
-        self.last_time = 0
+        #image sensor init
+        vrep.simxGetVisionSensorImage(self.client_id,self.vision_sensor,0,vrep.simx_opmode_streaming)
 
     def radian(self, degre):
         rad = degre*(math.pi/180)
@@ -62,11 +59,14 @@ class Hexapod(object):
             self.set_leg_position(i, [c, a, b])
 
     def set_leg_position(self, addr, pos):
+        self.lock.acquire()
         try:
             for i in range(3):
                 self.set_joint_position(addr, i, pos[i])
         except:
             raise
+        finally:
+            self.lock.release()
 
     def set_joint_position(self, addr, joint, pos):
         # TODO exception handling
@@ -93,7 +93,7 @@ class Hexapod(object):
         # init robot
         self.init()
 
-    def set_step_data(self, data,data_turn):
+    def set_step_data(self, data,data_turn,delay=-1):
         self.back_data = np.array(data[0])
         self.middle_data = np.array(data[1])
         self.ahead_data = np.array(data[2])
@@ -102,91 +102,127 @@ class Hexapod(object):
         self.middle_turn_data = np.array(data_turn[1])
         self.ahead_turn_data = np.array(data_turn[2])
 
-    def step(self, time_0, time_limit):
-        self.get_body_x_position()
-        while self.get_time() < time_limit:
-            total_step = self.ahead_data.shape[0]-1
-            # back
-            self.set_leg_position(1, np.concatenate(
-                [[self.middle_data[0][0]], [70], [self.middle_data[0][2]]]))
-            self.set_leg_position(3, np.concatenate(
-                [[self.ahead_data[0][0]], [60], [self.ahead_data[0][2]]]))
-            self.set_leg_position(5, np.concatenate(
-                [[self.back_data[0][0]], [70], [self.back_data[0][2]]]))
-            for i in range(total_step):
-                # ahead
-                self.set_leg_position(0, self.ahead_data[i])
-                self.set_leg_position(2, self.back_data[i])
-                self.set_leg_position(4, self.middle_data[i])
-                if i > round(total_step*4/5):
-                    self.set_leg_position(1, self.middle_data[0]+[0, 1, 0])
-                    self.set_leg_position(3, self.ahead_data[0]+[0, 1, 0])
-                    self.set_leg_position(5, self.back_data[0]+[0, 1, 0])
-                time.sleep(time_0)
-            # back
-            self.set_leg_position(0, np.concatenate(
-                [[self.ahead_data[0][0]], [50], [self.ahead_data[0][2]]]))
-            self.set_leg_position(2, np.concatenate(
-                [[self.back_data[0][0]], [50], [self.back_data[0][2]]]))
-            self.set_leg_position(4, np.concatenate(
-                [[self.middle_data[0][0]], [50], [self.middle_data[0][2]]]))
-            for i in range(total_step):
-                # ahead
-                self.set_leg_position(1, self.middle_data[i])
-                self.set_leg_position(3, self.ahead_data[i])
-                self.set_leg_position(5, self.back_data[i])
-                if i > round(total_step*4/5):
-                    self.set_leg_position(0, self.ahead_data[0]+[0, 1, 0])
-                    self.set_leg_position(2, self.back_data[0]+[0, 1, 0])
-                    self.set_leg_position(4, self.middle_data[0]+[0, 1, 0])
-                time.sleep(time_0)
+        if delay!=-1:
+            self.delay=delay
 
-    def keep_step(self,time_0,q):
+    def keep_step(self,time_0,q,direction=None):
         # self.step_init()
         # self.init()
         #wait for start
         q.get()
         while True:
             try:
-                self.one_step_t(time_0)
+                if direction is None:
+                    self.one_step_t(time_0)
+                else:
+                    direction()
                 if not q.empty():
                     break
             except:
                 break
-
-    def one_step(self, time_0,stage=-1):
-        total_step = self.ahead_data.shape[0]-1
-        hang = 10
+    
+    def right(self,delay=-1,stage=-1):
+        if delay==-1:
+            delay=self.delay
+        total_step = self.ahead_data.shape[0]
+        hang = 20
         full_flag=False
         if stage==-1:
             full_flag=True
+        index=0
+        l=total_step-1
         
         if stage==1 or full_flag:
             for i in range(total_step):
+                # if i in [0,1,2] :
+                #     continue
+                if i in [0]:
+                    continue
+                hang=(-(4/l**2)*i**2+(4/l)*i)*10
                 # ahead
                 self.set_leg_position(0, self.ahead_data[i])
                 self.set_leg_position(2, self.back_data[i])
-                self.set_leg_position(4, self.middle_data[i])
+                self.set_leg_position(4, self.middle_turn_data[i])
 
-                # back
-                self.set_leg_position(1, self.middle_data[total_step-i]+hang)
-                self.set_leg_position(3, self.ahead_data[total_step-i]+hang)
-                self.set_leg_position(5, self.back_data[total_step-i]+hang)
-                time.sleep(time_0)
-
+                # back hang up
+                # hang=-0.04444*(index**2)+1.3333*index
+                self.set_leg_position(1, self.middle_data[total_step-i-1]+hang)
+                self.set_leg_position(3, self.ahead_turn_data[total_step-i-1]+hang)
+                self.set_leg_position(5, self.back_turn_data[total_step-i-1]+hang)
+                time.sleep(delay)
+                index+=1
+        index=0
         if stage==2 or full_flag:
             for i in range(total_step):
+                # if i in [0,1,2]:
+                #     continue
+                if i in [0]:
+                    continue
+                hang=(-(4/l**2)*i**2+(4/l)*i)*10
                 # ahead
                 self.set_leg_position(1, self.middle_data[i])
-                self.set_leg_position(3, self.ahead_data[i])
-                self.set_leg_position(5, self.back_data[i])
+                self.set_leg_position(3, self.ahead_turn_data[i])
+                self.set_leg_position(5, self.back_turn_data[i])
     
-                # back
-                self.set_leg_position(0, self.ahead_data[total_step-i]+hang)
-                self.set_leg_position(2, self.back_data[total_step-i]+hang)
-                self.set_leg_position(4, self.middle_data[total_step-i]+hang)
-                time.sleep(time_0)
+                # back hang up
+                # hang=-0.04444*(index**2)+1.3333*index
+                self.set_leg_position(0, self.ahead_data[total_step-i-1]+hang)
+                self.set_leg_position(2, self.back_data[total_step-i-1]+hang)
+                self.set_leg_position(4, self.middle_turn_data[total_step-i-1]+hang)
+                time.sleep(delay)
+                index+=1
 
+
+    def left(self,delay=-1,stage=-1):
+        if delay==-1:
+            delay=self.delay
+        total_step = self.ahead_data.shape[0]
+        hang = 20
+        full_flag=False
+        if stage==-1:
+            full_flag=True
+        index=0
+        l=total_step-1
+        
+        if stage==1 or full_flag:
+            for i in range(total_step):
+                # if i in [0,1,2] :
+                #     continue
+                if i in [0]:
+                    continue
+                hang=(-(4/l**2)*i**2+(4/l)*i)*10
+                # ahead
+                self.set_leg_position(0, self.ahead_data[i])
+                self.set_leg_position(2, self.back_data[i])
+                self.set_leg_position(4, self.middle_turn_data[i])
+
+                # back hang up
+                # hang=-0.04444*(index**2)+1.3333*index
+                self.set_leg_position(1, self.middle_data[total_step-i-1]+hang)
+                self.set_leg_position(3, self.ahead_turn_data[total_step-i-1]+hang)
+                self.set_leg_position(5, self.back_turn_data[total_step-i-1]+hang)
+                time.sleep(delay)
+                index+=1
+        index=0
+        if stage==2 or full_flag:
+            for i in range(total_step):
+                # if i in [0,1,2]:
+                #     continue
+                if i in [0]:
+                    continue
+                hang=(-(4/l**2)*i**2+(4/l)*i)*10
+                # ahead
+                self.set_leg_position(0, self.middle_data[i])
+                self.set_leg_position(2, self.ahead_turn_data[i])
+                self.set_leg_position(4, self.back_turn_data[i])
+    
+                # back hang up
+                # hang=-0.04444*(index**2)+1.3333*index
+                self.set_leg_position(1, self.ahead_data[total_step-i-1]+hang)
+                self.set_leg_position(3, self.back_data[total_step-i-1]+hang)
+                self.set_leg_position(5, self.middle_turn_data[total_step-i-1]+hang)
+                time.sleep(delay)
+                index+=1
     def one_step_t(self, time_0,stage=-1):
         total_step = self.ahead_data.shape[0]
         hang = 20
@@ -235,29 +271,6 @@ class Hexapod(object):
                 self.set_leg_position(4, self.middle_data[total_step-i-1]+hang)
                 time.sleep(time_0)
                 index+=1
-
-    def one_step_2(self, time_0,delta_1=0,delta_2=0):
-        for i in range(60):
-            self.set_leg_position(0, self.ahead_data_t[i%60])
-            self.set_leg_position(5, self.back_data_t[i%60])
-
-            self.set_leg_position(1, self.middle_data_t[(i+delta_1)%60])
-            self.set_leg_position(4, self.middle_data_t[(i+delta_1)%60])
-
-            self.set_leg_position(2, self.back_data_t[(i+delta_1+delta_2)%60])
-            self.set_leg_position(3, self.ahead_data_t[(i+delta_1+delta_2)%60])
-            time.sleep(time_0)
-
-    def one_step_3(self, time_0,delta_1=0,delta_2=0):
-        for i in range(60):
-            self.set_leg_position(0, self.ahead_data_t[i%60])
-            self.set_leg_position(2, self.back_data_t[i%60])
-            self.set_leg_position(4, self.middle_data_t[i%60])
-
-            self.set_leg_position(1, self.middle_data_t[(i+delta_1)%60])
-            self.set_leg_position(3, self.ahead_data_t[(i+delta_1)%60])
-            self.set_leg_position(5, self.back_data_t[(i+delta_1)%60])
-            time.sleep(time_0)
 
 
     def turn_right(self, right_range,stage=-1,time_0 = 0.005):
@@ -352,57 +365,29 @@ class Hexapod(object):
                 time.sleep(time_0)
 
 
-    def test(self):
-        total_step = self.ahead_data.shape[0]-1
-        while True:
-            # back
-            self.set_leg_position(1, np.concatenate(
-                [[self.middle_data[0][0]], [50], [self.middle_data[0][2]]]))
-            self.set_leg_position(3, np.concatenate(
-                [[self.ahead_data[0][0]], [50], [self.ahead_data[0][2]]]))
-            self.set_leg_position(5, np.concatenate(
-                [[self.back_data[0][0]], [50], [self.back_data[0][2]]]))
-            for i in range(total_step):
-                # ahead
-                self.set_leg_position(0, self.ahead_data[i])
-                self.set_leg_position(2, self.back_data[i])
-                self.set_leg_position(4, self.middle_data[i])
-                if i > round(total_step*4/5):
-                    self.set_leg_position(1, self.middle_data[0]+[0, 1, 0])
-                    self.set_leg_position(3, self.ahead_data[0]+[0, 1, 0])
-                    self.set_leg_position(5, self.back_data[0]+[0, 1, 0])
-                # if i==0:
-                #     time.sleep(0.01)
-                time.sleep(0.003)
-            # back
-            self.set_leg_position(0, np.concatenate(
-                [[self.ahead_data[0][0]], [70], [self.ahead_data[0][2]]]))
-            self.set_leg_position(2, np.concatenate(
-                [[self.back_data[0][0]], [70], [self.back_data[0][2]]]))
-            self.set_leg_position(4, np.concatenate(
-                [[self.middle_data[0][0]], [60], [self.middle_data[0][2]]]))
-            for i in range(total_step):
-                # ahead
-                self.set_leg_position(1, self.middle_data[i])
-                self.set_leg_position(3, self.ahead_data[i])
-                self.set_leg_position(5, self.back_data[i])
-                if i > round(total_step*4/5):
-                    self.set_leg_position(0, self.ahead_data[0]+[0, 1, 0])
-                    self.set_leg_position(2, self.back_data[0]+[0, 1, 0])
-                    self.set_leg_position(4, self.middle_data[0]+[0, 1, 0])
-                # if i==0:
-                #     time.sleep(0.01)
-                time.sleep(0.003)
-
     def get_time(self) -> float:
         time_now = vrep.simxGetLastCmdTime(self.client_id)
         return time_now
 
     def get_body_x_position(self) -> float:
-        _, pos = vrep.simxGetObjectPosition(
-            self.client_id, self.body, -1, vrep.simx_opmode_blocking)
+        self.lock.acquire()
+        try:
+            _, pos = vrep.simxGetObjectPosition(
+                self.client_id, self.body, -1, vrep.simx_opmode_blocking)
+        finally:
+            self.lock.release()
         pos_x = pos[0]
         return pos_x
+
+    def get_body_y_position(self) -> float:
+        self.lock.acquire()
+        try:
+            _, pos = vrep.simxGetObjectPosition(
+                self.client_id, self.body, -1, vrep.simx_opmode_blocking)
+        finally:
+            self.lock.release()
+        pos_y = pos[1]
+        return pos_y
 
     def start_simulation(self):
         # status=-1
@@ -424,8 +409,12 @@ class Hexapod(object):
         time.sleep(0.5)
 
     def get_image(self):
-        ret, res, data = vrep.simxGetVisionSensorImage(
-            self.client_id, self.vision_sensor, 0, vrep.simx_opmode_blocking)
+        self.lock.acquire()
+        try:
+            ret, res, data = vrep.simxGetVisionSensorImage(
+                self.client_id, self.vision_sensor, 0, vrep.simx_opmode_buffer)
+        finally:
+            self.lock.release()
         # print('return code is {}'.format(ret))
         # print('the resolution is {}'.format(res))
         if ret != 0:
@@ -483,6 +472,7 @@ def main():
         # good 
         # rb.one_step_t(0.015)
         rb.one_step_t(0.005)
+        # rb.right()
         # rb.one_step_2(0.012,20,20)
         # rb.one_step_3(0.012,30,20)
         # rb.one_step(0.005)
