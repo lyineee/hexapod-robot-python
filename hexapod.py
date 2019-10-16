@@ -15,7 +15,26 @@ import threading
 
 
 class Hexapod(object):
+    #lock define 
     lock=threading.Lock()
+
+    #step data
+    back_data = None
+    middle_data = None
+    ahead_data = None
+
+    back_turn_data_1=None
+    middle_turn_data_1=None
+    ahead_turn_data_1=None
+
+    back_turn_data_2=None
+    middle_turn_data_2=None
+    ahead_turn_data_2=None
+
+    delay=None
+
+    #state
+    state=1
 
     def __init__(self, client_id):
         self.client_id = client_id
@@ -85,13 +104,16 @@ class Hexapod(object):
         self.middle_data = np.load('./data/NN_middle_use.npy')
         self.ahead_data = np.load('./data/NN_ahead_use.npy')
         
-        # plt.plot(self.back_data[:,0],self.back_data[:,1:])
-        # plt.show()
-        # self.ahead_data=self.ahead_data[::-1]
-        # self.back_data=self.back_data[::-1]
+        self.back_turn_data_1 = np.load('./data/NN_back_turn_use_1.npy')
+        self.middle_turn_data_1 = np.load('./data/NN_middle_turn_use_1.npy')
+        self.ahead_turn_data_1 = np.load('./data/NN_ahead_turn_use_1.npy')
 
+        self.back_turn_data_2 = np.load('./data/NN_back_turn_use_2.npy')
+        self.middle_turn_data_2 = np.load('./data/NN_middle_turn_use_2.npy')
+        self.ahead_turn_data_2 = np.load('./data/NN_ahead_turn_use_2.npy')
+    
         # init robot
-        self.init()
+        # self.init()
 
     def set_step_data(self, data,data_turn,delay=-1):
         self.back_data = np.array(data[0])
@@ -121,11 +143,14 @@ class Hexapod(object):
             except:
                 break
     
-    def right(self,delay=-1,stage=-1):
-        if delay==-1:
-            delay=self.delay
-        total_step = self.ahead_data.shape[0]
-        hang = 20
+    def step(self,data):
+        assert(self.delay is not None)
+        delay=self.delay
+
+        stage=self.state
+
+        total_step = data[0].shape[0]
+        hang = 30
         full_flag=False
         if stage==-1:
             full_flag=True
@@ -140,15 +165,15 @@ class Hexapod(object):
                     continue
                 hang=(-(4/l**2)*i**2+(4/l)*i)*10
                 # ahead
-                self.set_leg_position(0, self.ahead_data[i])
-                self.set_leg_position(2, self.back_data[i])
-                self.set_leg_position(4, self.middle_turn_data[i])
+                self.set_leg_position(0, data[0][i])
+                self.set_leg_position(2, data[2][i])
+                self.set_leg_position(4, data[4][i])
 
                 # back hang up
                 # hang=-0.04444*(index**2)+1.3333*index
-                self.set_leg_position(1, self.middle_data[total_step-i-1]+hang)
-                self.set_leg_position(3, self.ahead_turn_data[total_step-i-1]+hang)
-                self.set_leg_position(5, self.back_turn_data[total_step-i-1]+hang)
+                self.set_leg_position(1, data[1][total_step-i-1]+hang)
+                self.set_leg_position(3, data[3][total_step-i-1]+hang)
+                self.set_leg_position(5, data[5][total_step-i-1]+hang)
                 time.sleep(delay)
                 index+=1
         index=0
@@ -160,69 +185,43 @@ class Hexapod(object):
                     continue
                 hang=(-(4/l**2)*i**2+(4/l)*i)*10
                 # ahead
-                self.set_leg_position(1, self.middle_data[i])
-                self.set_leg_position(3, self.ahead_turn_data[i])
-                self.set_leg_position(5, self.back_turn_data[i])
+                self.set_leg_position(1, data[1][i])
+                self.set_leg_position(3, data[3][i])
+                self.set_leg_position(5, data[5][i])
     
                 # back hang up
                 # hang=-0.04444*(index**2)+1.3333*index
-                self.set_leg_position(0, self.ahead_data[total_step-i-1]+hang)
-                self.set_leg_position(2, self.back_data[total_step-i-1]+hang)
-                self.set_leg_position(4, self.middle_turn_data[total_step-i-1]+hang)
+                self.set_leg_position(0, data[0][total_step-i-1]+hang)
+                self.set_leg_position(2, data[2][total_step-i-1]+hang)
+                self.set_leg_position(4, data[4][total_step-i-1]+hang)
                 time.sleep(delay)
                 index+=1
 
+    def right_1(self,delay=-1,stage=-1):
+        # self.delay=delay
+        self.step([self.ahead_data,self.middle_data,self.back_data,self.ahead_turn_data_1,self.middle_turn_data_1,self.back_turn_data_1])
+        self.change_state()
 
-    def left(self,delay=-1,stage=-1):
-        if delay==-1:
-            delay=self.delay
-        total_step = self.ahead_data.shape[0]
-        hang = 20
-        full_flag=False
-        if stage==-1:
-            full_flag=True
-        index=0
-        l=total_step-1
-        
-        if stage==1 or full_flag:
-            for i in range(total_step):
-                # if i in [0,1,2] :
-                #     continue
-                if i in [0]:
-                    continue
-                hang=(-(4/l**2)*i**2+(4/l)*i)*10
-                # ahead
-                self.set_leg_position(0, self.ahead_data[i])
-                self.set_leg_position(2, self.back_data[i])
-                self.set_leg_position(4, self.middle_turn_data[i])
+    def right_2(self,delay=-1,stage=-1):
+        # self.delay=delay
+        self.step([self.ahead_data,self.middle_data,self.back_data,self.ahead_turn_data_2,self.middle_turn_data_2,self.back_turn_data_2])
+        self.change_state()
 
-                # back hang up
-                # hang=-0.04444*(index**2)+1.3333*index
-                self.set_leg_position(1, self.middle_data[total_step-i-1]+hang)
-                self.set_leg_position(3, self.ahead_turn_data[total_step-i-1]+hang)
-                self.set_leg_position(5, self.back_turn_data[total_step-i-1]+hang)
-                time.sleep(delay)
-                index+=1
-        index=0
-        if stage==2 or full_flag:
-            for i in range(total_step):
-                # if i in [0,1,2]:
-                #     continue
-                if i in [0]:
-                    continue
-                hang=(-(4/l**2)*i**2+(4/l)*i)*10
-                # ahead
-                self.set_leg_position(0, self.middle_data[i])
-                self.set_leg_position(2, self.ahead_turn_data[i])
-                self.set_leg_position(4, self.back_turn_data[i])
-    
-                # back hang up
-                # hang=-0.04444*(index**2)+1.3333*index
-                self.set_leg_position(1, self.ahead_data[total_step-i-1]+hang)
-                self.set_leg_position(3, self.back_data[total_step-i-1]+hang)
-                self.set_leg_position(5, self.middle_turn_data[total_step-i-1]+hang)
-                time.sleep(delay)
-                index+=1
+    def left_1(self,delay=-1,stage=-1):
+        # self.delay=delay
+        self.step([self.ahead_turn_data_1,self.middle_turn_data_1,self.back_turn_data_1,self.ahead_data,self.middle_data,self.back_data])
+        self.change_state()
+
+    def left_2(self,delay=-1,stage=-1):
+        # self.delay=delay
+        self.step([self.ahead_turn_data_2,self.middle_turn_data_2,self.back_turn_data_2,self.ahead_data,self.middle_data,self.back_data])
+        self.change_state()
+
+    def ahead(self,delay=-1,stage=-1):
+        # self.delay=delay
+        self.step([self.ahead_data,self.middle_data,self.back_data,self.ahead_data,self.middle_data,self.back_data])
+        self.change_state()
+
     def one_step_t(self, time_0,stage=-1):
         total_step = self.ahead_data.shape[0]
         hang = 20
@@ -364,6 +363,12 @@ class Hexapod(object):
                         2, self.back_data[left_range[0]:left_range[1]][turn_step-1-i]+hang)
                 time.sleep(time_0)
 
+    def change_state(self):
+        if self.state == 1:
+            self.state =2
+        else:
+            self.state=1
+
 
     def get_time(self) -> float:
         time_now = vrep.simxGetLastCmdTime(self.client_id)
@@ -440,21 +445,6 @@ def map(input_num, input_range, output_range):
     return result
 
 
-# def connect(retry):
-#     vrep.simxFinish(-1)  # 关掉之前的连接
-#     while True:
-#         clientId = vrep.simxStart(
-#             "127.0.0.1", 19997, True, True, 100, 5)  # 建立和服务器的连接
-#         if clientId != -1:  # 连接成功
-#             print('connect successfully')
-#             return clientId
-#         elif retry > 0:
-#             retry -= 1
-#         else:
-#             print('connect time out')
-#             sys.exit(1)
-#         time.sleep(1)
-
 
 def main():
     # generate_use_data([[10,45],[-25,40],[-50,-10]],50)
@@ -468,15 +458,7 @@ def main():
     #     rb.turn_right([20,34])
     while True:
         s_t=time.time()
-        # rb.one_step(0.003)
-        # good 
-        # rb.one_step_t(0.015)
         rb.one_step_t(0.005)
-        # rb.right()
-        # rb.one_step_2(0.012,20,20)
-        # rb.one_step_3(0.012,30,20)
-        # rb.one_step(0.005)
-        # rb.one_step_t(0.1)
         rb.show_speed()
         # print(time.time()-s_t)
     # data = rb.get_image()

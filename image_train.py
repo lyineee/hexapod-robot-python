@@ -224,7 +224,7 @@ class ImageTrain(object):
         data = data[result]
         return label, data
 
-
+state=0
 def test_robot(model_name='result.h5',rb=None):
     # global START_FLAG
     if rb is None:
@@ -237,12 +237,13 @@ def test_robot(model_name='result.h5',rb=None):
 
     # creat thread
     global state, lock
-    state = 0
     lock = threading.Lock()
     cap_th = threading.Thread(target=refresh_state, args=(rb, model_name))
     cap_th.start()
     stage = 1
 
+    rb.delay=0.0087107652327172
+    rb.step_init()
     while True:
         time_s = time.time()
         lock.acquire()
@@ -252,20 +253,21 @@ def test_robot(model_name='result.h5',rb=None):
             lock.release()
 
         if state_t == 0:
-            rb.one_step_t(0.013, stage)
+            # rb.one_step_t(0.013, stage)
+            rb.ahead()
         # left
         if state_t == 1:
             rb.turn_left([10, 28], stage,time_0=0.013)
         elif state_t == 2:
             # rb.turn_left([20, 39],stage)
             # rb.turn_left([10, 23], stage,time_0=0.013)
-            rb.left()
+            rb.left_1()
 
         elif state_t == 3:
             # rb.turn_left([20, 25],stage)
             # rb.turn_left([10, 16], stage,time_0=0.013)
             # rb.turn_left([10, 13], stage,time_0=0.013)
-            rb.left()
+            rb.left_2()
 
         # right
         elif state_t == 4:
@@ -273,27 +275,17 @@ def test_robot(model_name='result.h5',rb=None):
         elif state_t == 5:
             # rb.turn_right([20, 39],stage)
             # rb.turn_right([10, 23], stage,time_0=0.013)
-            rb.right()
+            rb.right_1()
         elif state_t == 6:
             # rb.turn_right([20, 25],stage)
             # rb.turn_right([10, 16], stage,time_0=0.013)
             # rb.turn_right([10, 13], stage,time_0=0.013)
-            rb.right()
-
-
-        if stage == 1:
-            stage = 2
-        else:
-            stage = 1
+            rb.right_2()
 
         # rb.show_speed()
         print('state:{}'.format(state), 'step_time_use:{}'.format(
             str(time.time()-time_s)), end='\r')
         # print('step_time_use:{}'.format(str(time.time()-)),end='\r')
-        if rb.get_body_x_position()**2+rb.get_body_y_position()**2<0.0625:
-            # START_FLAG=1
-            #TODO there should have something 
-            return
 
         
 lock=threading.Lock()
@@ -358,12 +350,12 @@ def refresh_state(cap, model_name,q=None):
         result = 0
         float_data = img_gray.reshape(1, 64, 64, 1)
         data = float_data.astype(np.uint8)
-        # if np.argmax(model_1.predict(data)) == 1:
-        #     result = np.argmax(model.predict(data))
-        # else:
-        #     result = 0
+        if np.argmax(model_1.predict(data)) == 1:
+            result = np.argmax(model.predict(data))
+        else:
+            result = 0
+            # print(result)
 
-        result = np.argmax(model.predict(data))
         # result=control(img_gray)
 
         lock.acquire()

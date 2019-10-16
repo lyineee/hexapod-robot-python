@@ -317,10 +317,18 @@ class ByOpt(object):
         ah_data = np.stack(ahead_leg)*60
         mi_data = np.stack(middle_leg)*60
 
+        # ah_data=ah_data[::-1]
+        # mi_data=mi_data[::-1]
+
+        # np.save('./data/NN_ahead_use.npy',ah_data)
+        # np.save('./data/NN_middle_use.npy',mi_data)
+        # np.save('./data/NN_back_use.npy',ah_data)
+
         # self.rb.set_step_data([ah_data, mi_data, ah_data])
 
         #turn data
         # delay=0.04866337735403608
+        delay=0.3
         ahead_turn_leg_a=np.array([0,-0.9474735404250036,0.2553768404632672])
         ahead_turn_leg_b=np.array([0,0.39316038539104503,-0.38129175361998874])
 
@@ -339,16 +347,18 @@ class ByOpt(object):
         ah_turn_data = np.stack(ahead_turn_leg)*60
         mi_turn_data = np.stack(middle_turn_leg)*60
 
-        ah_turn_data[:,0]=np.linspace(-3,3,5)
-        mi_turn_data[:,0]=np.linspace(-3,3,5)
+        ah_turn_data[:,0]=np.linspace(-1,1,5)
+        mi_turn_data[:,0]=np.linspace(-1,1,5)
         #TODO ok
 
         self.rb.set_step_data([ah_data, mi_data, ah_data],[ah_turn_data, mi_turn_data, ah_turn_data],delay)
 
         self.rb.start_simulation()
         q = Queue()
+        # th = threading.Thread(target=self.rb.keep_step,
+        #                       name='step_th', args=(delay, q,self.rb.right))
         th = threading.Thread(target=self.rb.keep_step,
-                              name='step_th', args=(delay, q,self.rb.right))
+                              name='step_th', args=(delay, q))
         # time.sleep(1)
         # use_time=test_method(self.rb)
 
