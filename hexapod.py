@@ -1,15 +1,12 @@
 import math
-import sys
+import threading
 import time
+from math import sqrt
 
 import numpy as np
-from matplotlib import pyplot as plt
-from math import sqrt
-from utils.vrep_util import connect
-import vrep
-from regression import generate_use_data
 
-import threading
+import vrep
+from utils.vrep_util import connect, map
 
 # from tensorflow import keras
 
@@ -36,8 +33,14 @@ class Hexapod(object):
     #state
     state=1
 
-    def __init__(self, client_id):
-        self.client_id = client_id
+    def __init__(self, client_id=None):
+        if client_id is None:
+            try:
+                self.client_id=connect(3)
+            except SystemExit:
+                print('connet fail, closing')
+        else:
+            self.client_id = client_id
         # handle init
         self.joint_handle = []
         prefix = ['left_joint', 'right_joint']
@@ -112,24 +115,20 @@ class Hexapod(object):
         self.middle_turn_data_2 = np.load('./data/NN_middle_turn_use_2.npy')
         self.ahead_turn_data_2 = np.load('./data/NN_ahead_turn_use_2.npy')
     
-        # init robot
-        # self.init()
 
     def set_step_data(self, data,data_turn,delay=-1):
         self.back_data = np.array(data[0])
         self.middle_data = np.array(data[1])
         self.ahead_data = np.array(data[2])
 
-        self.back_turn_data = np.array(data_turn[0])
-        self.middle_turn_data = np.array(data_turn[1])
-        self.ahead_turn_data = np.array(data_turn[2])
+        self.back_turn_data_1 = np.array(data_turn[0])
+        self.middle_turn_data_1 = np.array(data_turn[1])
+        self.ahead_turn_data_1 = np.array(data_turn[2])
 
         if delay!=-1:
             self.delay=delay
 
     def keep_step(self,time_0,q,direction=None):
-        # self.step_init()
-        # self.init()
         #wait for start
         q.get()
         while True:
@@ -159,8 +158,6 @@ class Hexapod(object):
         
         if stage==1 or full_flag:
             for i in range(total_step):
-                # if i in [0,1,2] :
-                #     continue
                 if i in [0]:
                     continue
                 hang=(-(4/l**2)*i**2+(4/l)*i)*10
@@ -170,7 +167,6 @@ class Hexapod(object):
                 self.set_leg_position(4, data[4][i])
 
                 # back hang up
-                # hang=-0.04444*(index**2)+1.3333*index
                 self.set_leg_position(1, data[1][total_step-i-1]+hang)
                 self.set_leg_position(3, data[3][total_step-i-1]+hang)
                 self.set_leg_position(5, data[5][total_step-i-1]+hang)
@@ -179,8 +175,6 @@ class Hexapod(object):
         index=0
         if stage==2 or full_flag:
             for i in range(total_step):
-                # if i in [0,1,2]:
-                #     continue
                 if i in [0]:
                     continue
                 hang=(-(4/l**2)*i**2+(4/l)*i)*10
@@ -190,7 +184,6 @@ class Hexapod(object):
                 self.set_leg_position(5, data[5][i])
     
                 # back hang up
-                # hang=-0.04444*(index**2)+1.3333*index
                 self.set_leg_position(0, data[0][total_step-i-1]+hang)
                 self.set_leg_position(2, data[2][total_step-i-1]+hang)
                 self.set_leg_position(4, data[4][total_step-i-1]+hang)
@@ -395,15 +388,11 @@ class Hexapod(object):
         return pos_y
 
     def start_simulation(self):
-        # status=-1
-        # while status!=1:
         status = vrep.simxStartSimulation(
             self.client_id, vrep.simx_opmode_oneshot)
         time.sleep(0.5)
 
     def stop_simulation(self):
-        # status=-1
-        # while status!=1:
         status = vrep.simxStopSimulation(
             self.client_id, vrep.simx_opmode_oneshot)
         time.sleep(0.5)
@@ -438,24 +427,13 @@ class Hexapod(object):
         print(sqrt(spe[0]**2+spe[1]**2+spe[2]**2),end='\r')
 
 
-def map(input_num, input_range, output_range):
-    a = (output_range[1]-output_range[0])/(input_range[1]-input_range[0])
-    b = output_range[0]-input_range[0]*a
-    result = a*input_num+b
-    return result
-
-
-
 def main():
     # generate_use_data([[10,45],[-25,40],[-50,-10]],50)
     client_id = connect(10)
     rb = Hexapod(client_id)
-    vrep.simxStartSimulation(client_id, vrep.simx_opmode_blocking)
+    rb.start_simulation()
     time.sleep(1)
     rb.step_init()
-    # rb.test()
-    # for _ in range(30):
-    #     rb.turn_right([20,34])
     while True:
         s_t=time.time()
         rb.one_step_t(0.005)

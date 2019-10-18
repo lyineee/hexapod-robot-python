@@ -24,7 +24,7 @@ class Bluez(object):
             finally:
                 retry-=1
                 time.sleep(1)
-        raise Exception('connection fail because try too many times')
+        raise ConnectionError('connection fail because try too many times')
 
     def send(self,data):
         if self.is_bluetooth_connected:

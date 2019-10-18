@@ -182,7 +182,6 @@ class ByOpt(object):
             position = 0
         return position
 
-
     def black_box_4(self, mi_0_s, mi_0_e, mi_1_s, mi_1_e, mi_2_s, mi_2_e, ah_0_s, ah_0_e, ah_1_s,ah_1_e, ah_2_s,ah_2_e,delay):
         # load the data
         ah_data = np.array(
@@ -404,27 +403,13 @@ class ByOpt(object):
         
     def test_data(self,data_opt,black_box_func):
         # load the data
-        # ah_data = np.array([[data['ah_0_s'], data['ah_1_s'], data['ah_2_s']], [
-        #                    (data['ah_0_e']+data['ah_0_s'])/2, data['ah_1_m'], data['ah_2_m']], [data['ah_0_e'], data['ah_1_e'], data['ah_2_e']]])
-        # mi_data = np.array([[data['mi_0_s'], data['mi_1_s'], data['mi_2_s']], [
-        #                    (data['mi_0_e']+data['mi_0_s'])/2, data['mi_1_m'], data['mi_2_m']], [data['mi_0_e'], data['mi_1_e'], data['mi_2_e']]])
-        # ba_data = np.array([[data['ba_0_e'], data['ba_1_s'], data['ba_2_s']], [
-        #                    (data['ba_0_e']+data['ba_0_s'])/2, data['ba_1_m'], data['ba_2_m']], [data['ba_0_s'], data['ba_1_e'], data['ba_2_e']]])
-        # self.rb.set_step_data([ba_data, mi_data, ah_data])
-
         ah_data = np.array([[data['ah_0_s'], data['ah_1_s'], data['ah_2_s']],  [
                            (data['ah_0_e']+data['ah_0_s'])/2,(data['ah_1_s']+data['ah_1_e'])/2,(data['ah_2_e']+data['ah_2_s'])/2],[data['ah_0_e'], data['ah_1_e'], data['ah_2_e']]])
         mi_data = np.array([[data['mi_0_s'], data['mi_1_s'], data['mi_2_s']], [
                            (data['mi_0_e']+data['mi_0_s'])/2,(data['mi_1_s']+data['mi_1_e'])/2,(data['mi_2_e']+data['mi_2_s'])/2],[data['mi_0_e'], data['mi_1_e'], data['mi_2_e']]])
         ba_data = np.array([[data['ba_0_e'], data['ba_1_s'], data['ba_2_s']],[
                            (data['ba_0_e']+data['ba_0_s'])/2,(data['ba_1_s']+data['ba_1_e'])/2,(data['ba_2_e']+data['ba_2_s'])/2],[data['ba_0_s'], data['ba_1_e'], data['ba_2_e']]])
-        # ba_data=ah_data
-        # self.rb.set_step_data([ba_data, mi_data, ah_data])
-        # self.rb.start_simulation()
-        # while True:
-        #     # self.rb.one_step_t(0.2)
-        #     self.rb.one_step_t(data['delay'])
-        #     self.rb.show_speed()
+                           
         self.test=1
         black_box_func(**data_opt)
         self.test=0
@@ -434,7 +419,6 @@ if __name__ == "__main__":
     tr = ByOpt(ifNN=False)
     # tr.black_box_2(-5.0,11.4296277651623,16.31698153837967,38.84512575870721,22.697966008395372,-10.0,-60.0,-10.0,17.705280260266758,64.11029298688739,30.911962129585323,34.757000163524644,1.090466653651632,-10.0,-60.0,-10.0,6.405387684512668,-55.0,33.12118629201006,48.28824581162664,26.905272497722216,-10.0,-60.0,-10.0,0.18422438495304821)
 
-    #TODO keep this data, might be useful
     #black_box_3
     data_1= {"ah_0_e": 39.60156540443571, "ah_0_s": -13.911465133939139, "ah_1_e": 13.304941041824264, "ah_1_s": 19.283187669126388, "ah_2_e": -47.266721545325105, "ah_2_s": -43.46164467265923, "ba_0_e": -28.078619905173575, "ba_0_s": 7.321719204995455, "ba_1_e": 12.95294692699372, "ba_1_s": 22.040112745754758, "ba_2_e": -20.50870049574198, "ba_2_s": -47.637777686940694, "delay": 0.1353229185083292, "mi_0_e": 14.111028450248934, "mi_0_s": -33.16640973101709, "mi_1_e": 6.770199891816471, "mi_1_s": 22.381130830797904, "mi_2_e": -36.23351545618668, "mi_2_s": -56.240398519967535}
     #black_box_4
@@ -446,26 +430,16 @@ if __name__ == "__main__":
     #black_box_5
     data_5={'ahead_1_a': -0.11787471891040746,'ahead_1_b': -0.35979252290763664,'ahead_2_a': -0.8051121723991821,'ahead_2_b': 0.2673552110494355,'ahead_3_a': -0.17858107322978412,'ahead_3_b': 0.6018015322098393,'delay': 0.03391338047339743,'middle_1_a': 0.5914147012457913,'middle_1_b': 0.11766459295904363,'middle_2_a': -0.4261450552636197,'middle_2_b': 0.6619504757239809,'middle_3_a': -0.21450701395992966,'middle_3_b': -0.8552356097886922}
     
-
     #??? -10 black_box_6
     data_6={"ahead_2_a": -0.793547986844716, "ahead_2_b": -0.10421294764818967, "middle_2_a": 0.8171910061861911, "middle_2_b": -0.412771703252641}
     data_7={'ahead_1_a': 0.5446098736046021, 'ahead_1_b': -0.835653908906631, 'delay': 0.02573650763940472, 'middle_1_a': 0.665468853686944, 'middle_1_b': -0.4075119658229989}
     data_7={'ahead_1_a': 0.5446098736046021, 'ahead_1_b': -0.835653908906631, 'delay': 0.03573650763940472, 'middle_1_a': 0.665468853686944, 'middle_1_b': -0.4075119658229989}
     data_7={'ahead_a': 0.5446098736046021, 'ahead_b': -0.835653908906631, 'delay': 0.03573650763940472, 'middle_a': 0.665468853686944, 'middle_b': -0.4075119658229989}
 
-    # tr.test(data_7,tr.black_box_6)
     #black_box_7 
     data_8={'ahead_a': 0.7973475208988559, 'ahead_b': -0.9925179072490438, 'delay': 0.04676828436230832, 'middle_a': 0.7606830742221407, 'middle_b': -0.3833777503252276}
-    data_9 = {'ahead_a': 0.7855599514433688, 
-              'ahead_b': -1.0,
-            #   'delay': 0.04866337735403608,
-              'middle_a': 0.7379049669844442,
-              'middle_b': -0.36132918484862947}#use this data data[-2] this is leg_0 data
-    data_10 = {'ahead_a': 0.8139253072428453,
-               'ahead_b': -0.9630527989237955,
-               'delay': 0.04795460569137124,
-               'middle_a': 0.7961344428871164,
-               'middle_b': -0.3961634973231694}
+    data_9 = {'ahead_a': 0.7855599514433688,   'ahead_b': -1.0,#   'delay': 0.04866337735403608,  'middle_a': 0.7379049669844442,  'middle_b': -0.36132918484862947}#use this data data[-2] this is leg_0 data
+    data_10 = {'ahead_a': 0.8139253072428453,'ahead_b': -0.9630527989237955,'delay': 0.04795460569137124,'middle_a': 0.7961344428871164,'middle_b': -0.3961634973231694}
 
     #new one 
     data_11 ={'ahead_a': 0.63,                                                                                'ahead_b': -0.8667278955654526,

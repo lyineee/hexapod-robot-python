@@ -21,7 +21,7 @@ class RobotControl(object):
         while not self.bz.is_bluetooth_connected:
             try:
                 self.bz.connect(5)
-            except:
+            except ConnectionError:
                 pass
         print('connect success')
 
@@ -60,12 +60,15 @@ class RobotControl(object):
 
     def loop(self):
         while True:
-            self.get_state(show_window=True)
+            try:
+                self.get_state(show_window=True)
+            except:
+                self.cap=cv2.VideoCapture(self.cap_url)
             print(self.state, end='\r')
-            # try:
-            #     self.bz.send(self.state)
-            # except:
-            #     self.bluetooth_connect()
+            try:
+                self.bz.send(self.state)
+            except:
+                self.bluetooth_connect()
                 
 
 

@@ -3,6 +3,7 @@ from tensorflow import keras
 
 import numpy as np
 import matplotlib.pyplot as plt
+from utils.vrep_util import map
 
 
 def build_model():
@@ -171,15 +172,6 @@ def txt_writer(f, data):
             f.write(',')
     f.write('}')
 
-# def get_turn_data():
-#     generate_use_data_t()
-
-
-def map(input_num, input_range, output_range):
-    a = (output_range[1]-output_range[0])/(input_range[1]-input_range[0])
-    b = output_range[0]-input_range[0]*a
-    result = a*input_num+b
-    return result
 
 
 if __name__ == "__main__":
@@ -235,10 +227,11 @@ if __name__ == "__main__":
     c={"delay_time": 0.013257107652327172, "length": 4, "st_point_a": 26.187273919059535, "st_point_m": -12.171231015717657} #TODO fastest   4.88s/1.6m  current used
     # a={'delay_time': 0.010778506064900967,'length': 23.39719477061695,'st_point_a': 25.870626368447393,'st_point_m': -12.080083913592235}
     # generate_use_data([[a['st_point_a'], a['st_point_a']-a['length']], [a['st_point_m'] +a['length'], a['st_point_m']], [-1*a['st_point_a']+a['length'], -1*a['st_point_a']]], 30)
-    generate_turn_data_1([[8,0],[-4,4],[-8,0]], 30)
+    # generate_turn_data_1([[8,0],[-4,4],[-8,0]], 30)
+    # generate_turn_data_2([[2,0],[2,-2],[-2,0]], 30) #3
+    # generate_turn_data_1([[2,0],[4,-4],[-2,0]], 30) #2
     # generate_turn_data_2([[c['st_point_a'], c['st_point_a']-c['length']], [c['st_point_m'] +c['length'], c['st_point_m']], [-1*c['st_point_a']+c['length'], -1*c['st_point_a']]], 30)
     # gen_data_for_arduino()
     # gen_test(['NN_ahead_use.npy','NN_middle_use.npy','NN_back_use.npy'])
-    gen_test(['NN_ahead_turn_use_1.npy','NN_middle_turn_use_1.npy','NN_back_turn_use_1.npy'])
-    # gen_test(['NN_ahead_turn_use_2.npy','NN_middle_turn_use_2.npy','NN_back_turn_use_2.npy'])
-    pass
+    # gen_test(['NN_ahead_turn_use_1.npy','NN_middle_turn_use_1.npy','NN_back_turn_use_1.npy'])
+    gen_test(['NN_ahead_turn_use_2.npy','NN_middle_turn_use_2.npy','NN_back_turn_use_2.npy'])

@@ -96,42 +96,6 @@ class ImageTrain(object):
         label = np.concatenate(label_list, axis=0)
         return label, data
 
-    def get_data_slow(self, img_path='./image/1/'):
-        # get file name
-        img_size = (32, 32)
-        label = []
-        file_name_list = os.listdir(img_path)
-        data = np.zeros((1,)+img_size+(1,), dtype=np.float32)
-        i = 0
-        for file_name in file_name_list:
-            # data
-            file_name = img_path+file_name
-            img = cv2.imread(file_name)
-            img_resize = cv2.resize(img, img_size)
-            img_gray = cv2.cvtColor(img_resize, cv2.COLOR_RGB2GRAY)
-
-            # filter
-            img_gray = cv2.medianBlur(img_gray, 3)
-
-            img_array = np.array(img_gray)
-            img_array = img_array.reshape((1,)+img_size+(1,))
-            data = np.concatenate([data, img_array], axis=0)
-            # label
-            label_name = int(os.path.splitext(file_name)[0].split('_')[-1])
-            if label_name == 7 or label_name == 8:
-                label_name = 0
-            # if label_name == 2:
-            #     label_name = 3
-            # if label_name == 5:
-            #     label_name = 6
-            label.append(label_name)
-            i += 1
-            print(i)
-
-        data = np.delete(data, 0, axis=0)
-        label = np.array(label)
-        label = utils.to_categorical(label, num_classes=7)
-        return label, data
 
     def get_data(self, img_path):
         img_size = (64, 64)
@@ -224,6 +188,7 @@ class ImageTrain(object):
         data = data[result]
         return label, data
 
+#global state
 state=0
 def test_robot(model_name='result.h5',rb=None):
     # global START_FLAG
@@ -371,52 +336,6 @@ def refresh_state(cap, model_name,q=None):
         cv2.waitKey(1)
         time.sleep(0.2)
 
-def test_method(rb):
-    global state, lock
-    rb.start_simulation()
-    time.sleep(1)
-    state = 0
-    # lock = threading.Lock()
-    # q=Queue()
-    # cap_th = threading.Thread(target=refresh_state, args=(rb, 'result.h5',q))
-    # cap_th.start()
-    stage = 1
-    #wait model to init
-    time_start=time.time()
-
-    while True:
-        time_s = time.time()
-        lock.acquire()
-        try:
-            state_t = state
-        finally:
-            lock.release()
-        if state_t == 0:
-            rb.one_step_t(0.013, stage)
-        # left
-        if state_t == 1:
-            rb.turn_left([10, 28], stage,time_0=0.013)
-        elif state_t == 2:
-            rb.left()
-        elif state_t == 3:
-            rb.left()
-        # right
-        elif state_t == 4:
-            rb.turn_right([10, 28], stage,time_0=0.013)
-        elif state_t == 5:
-            rb.right()
-        elif state_t == 6:
-            rb.right()
-        if stage == 1:
-            stage = 2
-        else:
-            stage = 1
-        if time.time()-time_start>15:
-            return 30
-        if rb.get_body_x_position()**2+rb.get_body_y_position()**2<0.0625:
-            return time.time()-time_start
-
-
 def train_set_percentage(label=None):
     test = ImageTrain()
     if label is None:
@@ -429,7 +348,7 @@ def train_set_percentage(label=None):
     e = np.size(np.where(label == 0))
     f = np.size(np.where(label == 1))
     g = np.size(np.where(label == 4))
-    total = a+b+c+d+e
+    # total = a+b+c+d+e
     print('2:{} 3:{} 5:{} 6:{} 0:{} 1:{} 4:{}'.format(a, b, c, d, e, f, g))
 
 
@@ -450,11 +369,3 @@ if __name__ == "__main__":
     test_robot('turn_straight_cla_v0.2.h5')
     # refresh_state(cv2.VideoCapture('http://192.168.1.1:4455/?action=stream'),'turn_straight_cla_v0.2.h5')
     pass
-
-# 5000
-# 2300
-# 2300
-# 2300
-# 2300
-
-#50s 
