@@ -44,4 +44,9 @@ class Bluez(object):
 if __name__ == "__main__":
     bluez=Bluez()
     bluez.connect(3)
-    bluez.end()
+    try:
+        while True:
+            bluez.send('3')
+            time.sleep(0.5)
+    finally:
+        bluez.end()

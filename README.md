@@ -1,5 +1,7 @@
 # hexapod robot python code
 
+## 一定要测电池用的时间
+
 see [notice](./NOTICE.md)
 
 0.54

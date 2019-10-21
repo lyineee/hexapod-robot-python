@@ -112,9 +112,9 @@ def gen_test(path):
 
 
     # #TODO delete?
-    # aheadRow[:, 0] = -aheadRow[:, 0]
-    # middleRow[:, 0] = -middleRow[:, 0]
-    # backRow[:, 0] = -backRow[:, 0]
+    aheadRow[:, 0] = -aheadRow[:, 0]
+    middleRow[:, 0] = -middleRow[:, 0]
+    backRow[:, 0] = -backRow[:, 0]
 
     # aheadRow[:, 0] = aheadRow[:, 0][::-1]
     # middleRow[:, 0] = middleRow[:, 0][::-1]
@@ -228,8 +228,8 @@ if __name__ == "__main__":
     # a={'delay_time': 0.010778506064900967,'length': 23.39719477061695,'st_point_a': 25.870626368447393,'st_point_m': -12.080083913592235}
     # generate_use_data([[a['st_point_a'], a['st_point_a']-a['length']], [a['st_point_m'] +a['length'], a['st_point_m']], [-1*a['st_point_a']+a['length'], -1*a['st_point_a']]], 30)
     # generate_turn_data_1([[8,0],[-4,4],[-8,0]], 30)
-    # generate_turn_data_2([[2,0],[2,-2],[-2,0]], 30) #3
-    # generate_turn_data_1([[2,0],[4,-4],[-2,0]], 30) #2
+    generate_turn_data_2([[2,0],[3,-3],[-2,0]], 30) #3
+    # generate_turn_data_1([[2,0],[8,-8],[-2,0]], 30) #2
     # generate_turn_data_2([[c['st_point_a'], c['st_point_a']-c['length']], [c['st_point_m'] +c['length'], c['st_point_m']], [-1*c['st_point_a']+c['length'], -1*c['st_point_a']]], 30)
     # gen_data_for_arduino()
     # gen_test(['NN_ahead_use.npy','NN_middle_use.npy','NN_back_use.npy'])

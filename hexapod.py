@@ -435,9 +435,11 @@ def main():
     time.sleep(1)
     rb.step_init()
     while True:
-        s_t=time.time()
-        rb.one_step_t(0.005)
-        rb.show_speed()
+        # s_t=time.time()
+        # rb.one_step_t(0.005)
+        # rb.show_speed()
+        rb.delay=0.02
+        rb.right_2()
         # print(time.time()-s_t)
     # data = rb.get_image()
     # from utils.cv2_util import img_show
